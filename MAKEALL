@@ -710,6 +710,7 @@ LIST_pxa="		\
 	cerf250		\
 	colibri_pxa270	\
 	cradle		\
+	colibri_pxa320	\
 	csb226		\
 	delta		\
 	innokom		\
