@@ -30,6 +30,7 @@ START	= start.o
 COBJS	+= cpu.o
 COBJS	+= i2c.o
 COBJS	+= pxafb.o
+COBJS	+= sysinfo.o
 COBJS	+= timer.o
 COBJS	+= usb.o
 
