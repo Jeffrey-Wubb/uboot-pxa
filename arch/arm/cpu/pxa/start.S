@@ -222,14 +222,7 @@ OSTIMER_BASE:	.word	0x40a00000
 #define OIER	0x1C
 
 /* Clock Manager Registers						    */
-#ifdef CONFIG_CPU_MONAHANS
-# ifndef CONFIG_SYS_MONAHANS_RUN_MODE_OSC_RATIO
-#  error "You have to define CONFIG_SYS_MONAHANS_RUN_MODE_OSC_RATIO!!"
-# endif /* !CONFIG_SYS_MONAHANS_RUN_MODE_OSC_RATIO */
-# ifndef CONFIG_SYS_MONAHANS_TURBO_RUN_MODE_RATIO
-#  define CONFIG_SYS_MONAHANS_TURBO_RUN_MODE_RATIO 0x1
-# endif /* !CONFIG_SYS_MONAHANS_TURBO_RUN_MODE_RATIO */
-#else /* !CONFIG_CPU_MONAHANS */
+#ifndef CONFIG_CPU_MONAHANS
 #ifdef CONFIG_SYS_CPUSPEED
 CC_BASE:	.word	0x41300000
 #define CCCR	0x00
@@ -264,22 +257,10 @@ cpu_init_crit:
 	mov	r1, #0
 	mcr	p6, 0, r1, c1, c0, 0	@ ICMR
 	mcr	p6, 0, r1, c7, c0, 0	@ ICMR2
-
-	/* turn off all clocks but the ones we will definitly require */
-	ldr	r1, =CKENA
-	ldr	r2, =(CKENA_22_FFUART | CKENA_10_SRAM | CKENA_9_SMC | CKENA_8_DMC)
-	str	r2, [r1]
-	ldr	r1, =CKENB
-	ldr	r2, =(CKENB_6_IRQ)
-	str	r2, [r1]
 #endif /* !CONFIG_CPU_MONAHANS */
 
 	/* set clock speed */
-#ifdef CONFIG_CPU_MONAHANS
-	ldr	r0, =ACCR
-	ldr	r1, =(((CONFIG_SYS_MONAHANS_TURBO_RUN_MODE_RATIO<<8) & ACCR_XN_MASK) | (CONFIG_SYS_MONAHANS_RUN_MODE_OSC_RATIO & ACCR_XL_MASK))
-	str	r1, [r0]
-#else /* !CONFIG_CPU_MONAHANS */
+#ifndef CONFIG_CPU_MONAHANS
 #ifdef CONFIG_SYS_CPUSPEED
 	ldr	r0, CC_BASE
 	ldr	r1, cpuspeed
