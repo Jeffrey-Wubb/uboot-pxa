@@ -731,6 +731,7 @@ LIST_pxa="		\
 	xsengine	\
 	zipitz2		\
 	zylonite	\
+	zylonite_pxa300	\
 "
 
 LIST_ixp="		\
