@@ -713,6 +713,7 @@ LIST_pxa="		\
 	delta		\
 	innokom		\
 	lubbock		\
+	palmtc		\
 	pleb2		\
 	polaris		\
 	pxa255_idp	\
