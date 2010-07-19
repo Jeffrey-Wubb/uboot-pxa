@@ -713,6 +713,7 @@ LIST_pxa="		\
 	delta		\
 	innokom		\
 	lubbock		\
+	palmld		\
 	palmtc		\
 	pleb2		\
 	polaris		\
