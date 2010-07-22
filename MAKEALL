@@ -719,7 +719,8 @@ LIST_pxa="		\
 	polaris		\
 	pxa255_idp	\
 	trizepsiv	\
-	vpac270_nor	\
+	vpac270_128M_nor\
+	vpac270_256M_nor\
 	vpac270_onenand	\
 	wepep250	\
 	xaeniax		\
