@@ -815,6 +815,15 @@ Alex Züpke <azu@sysgo.de>
 	lart		SA1100
 	dnp1110		SA1110
 
+Marek Vasut <marek.vasut@gmail.com>
+
+	balloon3	xscale
+	colibri_pxa270	xscale
+	palmld		xscale
+	palmtc		xscale
+	vpac270		xscale
+	zipitz2		xscale
+
 -------------------------------------------------------------------------
 
 Unknown / orphaned boards:
