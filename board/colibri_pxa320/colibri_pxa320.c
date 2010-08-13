@@ -66,16 +66,19 @@ int board_init (void)
 
 	/* Chipselect 3 configuration */
 	GPIO4		= 0x00000801;
-	CSADRCFG3	= 0x0032c80b;
+	CSADRCFG3	= 0x0032c809;
 
 	/* Configuration for Compact Flash */
-	CSADRCFG_P	= 0x0032091c;
+	CSADRCFG_P	= 0x0038080c;
+	CSMSADRCFG	= 0x00000002;
 
 	/* Configuration for the CPLD */
+#if 0	/* Disabled due to bug in CPLD FW v1.6 */
 	writew (CPLD_REG_CS_CTRL_EXT_nCS0_EN |
 		CPLD_REG_CS_CTRL_EXT_nCS1_EN |
 		CPLD_REG_CS_CTRL_EXT_nCS2_EN,
 		CPLD_REG_CS_CTRL);
+#endif
 	writew (CPLD_REG_CS_MEM_CF_EN |
 		CPLD_REG_CS_MEM_RDnWR_EN |
 		CPLD_REG_CS_MEM_nOE_EN,
