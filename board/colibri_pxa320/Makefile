@@ -25,7 +25,8 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(BOARD).a
 
-COBJS	:= colibri_pxa320.o
+CCPLDS	:= xilinx_jtag/lenval.o xilinx_jtag/micro.o xilinx_jtag/ports.o
+COBJS	:= colibri_pxa320.o $(CCPLDS)
 SOBJS	:= lowlevel_init.o
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)

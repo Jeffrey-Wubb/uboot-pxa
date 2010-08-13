@@ -84,6 +84,20 @@ int board_init (void)
 		CPLD_REG_CS_MEM_nOE_EN,
 		CPLD_REG_CS_MEM);
 
+	/* CPLD programming interface */
+	GPIO1 = 0xd887;
+	GPIO1_2 = 0xd880;
+	GPIO83 = 0xd880;
+	GPIO85 = 0xd880;
+	GPIO86 = 0xd880;
+
+	GPCR0 = 0x2;
+	GPDR0 |= 0x2;
+
+	GPCR2 = 0x00680000;
+	GPDR2 |= 0x00480000;
+	GPDR2 &= ~0x00200000;
+
 	/* MMC */
 	GPIO18 = 0x804;
 	GPIO19 = 0x804;
