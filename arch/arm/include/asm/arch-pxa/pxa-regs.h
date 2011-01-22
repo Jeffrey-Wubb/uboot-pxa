@@ -1142,26 +1142,34 @@ typedef void		(*ExcpHndlr) (void) ;
  */
 
 #if defined(CONFIG_CPU_MONAHANS)
-#define ACCR		0x41340000  /* Application Subsystem Clock Configuration Register */
-#define ACSR		0x41340004  /* Application Subsystem Clock Status Register */
-#define AICSR		0x41340008  /* Application Subsystem Interrupt Control/Status Register */
-#define CKENA		0x4134000C  /* A Clock Enable Register */
-#define CKENB		0x41340010  /* B Clock Enable Register */
-#define AC97_DIV	0x41340014  /* AC97 clock divisor value register */
+#define ACCR			0x41340000	/* Application Subsystem Clock Configuration Register */
+#define ACSR			0x41340004	/* Application Subsystem Clock Status Register */
+#define AICSR			0x41340008	/* Application Subsystem Interrupt Control/Status Register */
+#define CKENA			0x4134000C	/* A Clock Enable Register */
+#define CKENB			0x41340010	/* B Clock Enable Register */
+#define AC97_DIV		0x41340014	/* AC97 clock divisor value register */
 
-#define ACCR_SMC_MASK	0x03800000	/* Static Memory Controller Frequency Select */
-#define ACCR_SRAM_MASK	0x000c0000	/* SRAM Controller Frequency Select */
-#define ACCR_FC_MASK	0x00030000	/* Frequency Change Frequency Select */
-#define ACCR_HSIO_MASK	0x0000c000	/* High Speed IO Frequency Select */
-#define ACCR_DDR_MASK	0x00003000	/* DDR Memory Controller Frequency Select */
-#define ACCR_XN_MASK	0x00000700	/* Run Mode Frequency to Turbo Mode Frequency Multiplier */
-#define ACCR_XL_MASK	0x0000001f	/* Crystal Frequency to Memory Frequency Multiplier */
-#define ACCR_XPDIS	(1 << 31)
-#define ACCR_SPDIS	(1 << 30)
-#define ACCR_13MEND1	(1 << 27)
-#define ACCR_D0CS	(1 << 26)
-#define ACCR_13MEND2	(1 << 21)
-#define ACCR_PCCE	(1 << 11)
+#define ACCR_XPDIS		(1 << 31)	/* Core PLL Output Disable */
+#define ACCR_SPDIS		(1 << 30)	/* System PLL Output Disable */
+#define ACCR_D0CS		(1 << 26)	/* D0 Mode Clock Select */
+#define ACCR_PCCE		(1 << 11)	/* Power Mode Change Clock Enable */
+#define ACCR_DDR_D0CS		(1 << 7)	/* DDR SDRAM clock frequency in D0CS (PXA31x only) */
+
+#define ACCR_SMCFS_MASK		(0x7 << 23)	/* Static Memory Controller Frequency Select */
+#define ACCR_SFLFS_MASK		(0x3 << 18)	/* Frequency Select for Internal Memory Controller */
+#define ACCR_XSPCLK_MASK	(0x3 << 16)	/* Core Frequency during Frequency Change */
+#define ACCR_HSS_MASK		(0x3 << 14)	/* System Bus-Clock Frequency Select */
+#define ACCR_DMCFS_MASK		(0x3 << 12)	/* Dynamic Memory Controller Clock Frequency Select */
+#define ACCR_XN_MASK		(0x7 << 8)	/* Core PLL Turbo-Mode-to-Run-Mode Ratio */
+#define ACCR_XL_MASK		(0x1f)		/* Core PLL Run-Mode-to-Oscillator Ratio */
+
+#define ACCR_SMCFS(x)		(((x) & 0x7) << 23)
+#define ACCR_SFLFS(x)		(((x) & 0x3) << 18)
+#define ACCR_XSPCLK(x)		(((x) & 0x3) << 16)
+#define ACCR_HSS(x)		(((x) & 0x3) << 14)
+#define ACCR_DMCFS(x)		(((x) & 0x3) << 12)
+#define ACCR_XN(x)		(((x) & 0x7) << 8)
+#define ACCR_XL(x)		((x) & 0x1f)
 
 #define CKENA_30_MSL0	(1 << 30)	/* MSL0 Interface Unit Clock Enable */
 #define CKENA_29_SSP4	(1 << 29)	/* SSP3 Unit Clock Enable */

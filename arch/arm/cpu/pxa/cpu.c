@@ -319,9 +319,126 @@ int arch_cpu_init(void)
 	pxa_clock_setup();
 	return 0;
 }
+#else	/* MONAHANS */
+
+#define HSS_104M	(0)
+#define HSS_156M	(1)
+#define HSS_208M	(2)
+#define HSS_312M	(3)
+
+#define SMCFS_78M	(0)
+#define SMCFS_104M	(2)
+#define SMCFS_208M	(5)
+
+#define SFLFS_104M	(0)
+#define SFLFS_156M	(1)
+#define SFLFS_208M	(2)
+#define SFLFS_312M	(3)
+
+#define XSPCLK_156M	(0)
+#define XSPCLK_NONE	(3)
+
+#define DMCFS_26M	(0)
+#define DMCFS_260M	(3)
+
+struct pxa3xx_freq_info {
+	unsigned int cpufreq_mhz;
+	unsigned int core_xl : 5;
+	unsigned int core_xn : 3;
+	unsigned int hss : 2;
+	unsigned int dmcfs : 2;
+	unsigned int smcfs : 3;
+	unsigned int sflfs : 2;
+	unsigned int df_clkdiv : 3;
+};
+
+#define OP(cpufreq, _xl, _xn, _hss, _dmc, _smc, _sfl, _dfi)		\
+{									\
+	.cpufreq_mhz	= cpufreq,					\
+	.core_xl	= _xl,						\
+	.core_xn	= _xn,						\
+	.hss		= HSS_##_hss##M,				\
+	.dmcfs		= DMCFS_##_dmc##M,				\
+	.smcfs		= SMCFS_##_smc##M,				\
+	.sflfs		= SFLFS_##_sfl##M,				\
+	.df_clkdiv	= _dfi,						\
+}
+
+#if defined(CONFIG_CPU_PXA300) || defined(CONFIG_CPU_PXA310)
+static struct pxa3xx_freq_info pxa300_freqs[] = {
+	/*  CPU XL XN  HSS DMEM SMEM SRAM DFI VCC_CORE VCC_SRAM */
+	OP(104,  8, 1, 104, 260,  78, 104, 3), /* 104MHz */
+	OP(208, 16, 1, 104, 260, 104, 156, 2), /* 208MHz */
+	OP(416, 16, 2, 156, 260, 104, 208, 2), /* 416MHz */
+	OP(624, 24, 2, 208, 260, 208, 312, 3), /* 624MHz */
+};
+#endif
+
+#if defined(CONFIG_CPU_PXA320)
+static struct pxa3xx_freq_info pxa320_freqs[] = {
+	/*  CPU XL XN  HSS DMEM SMEM SRAM DFI VCC_CORE VCC_SRAM */
+	OP(104,  8, 1, 104, 260,  78, 104, 3), /* 104MHz */
+	OP(208, 16, 1, 104, 260, 104, 156, 2), /* 208MHz */
+	OP(416, 16, 2, 156, 260, 104, 208, 2), /* 416MHz */
+	OP(624, 24, 2, 208, 260, 208, 312, 3), /* 624MHz */
+	OP(806, 31, 2, 208, 260, 208, 312, 3), /* 806MHz */
+};
+#endif
+
+void pxa_clock_setup(void)
+{
+	uint32_t mask = ACCR_XN_MASK | ACCR_XL_MASK;
+	uint32_t accr = readl(ACCR);
+	uint32_t xclkcfg;
+	struct pxa3xx_freq_info *info;
+#ifdef	CONFIG_PXA3XX_CPUFREQ_AUTO
+#ifdef	CONFIG_CPU_PXA320
+	info = &pxa320_freqs[4];
 #else
+	unsigned long cpuid;
+	/* 624MHz for PXA310 ; 208MHz for PXA300 */
+	asm volatile("mrc p15, 0, %0, c0, c0, 0" : "=r"(cpuid));
+	info = &pxa300_freqs[(cpuid & 0x10) ? 3 : 1];
+#endif
+#else
+#ifdef	CONFIG_CPU_PXA320
+	info = &pxa320_freqs[CONFIG_PXA3XX_FREQ_IDX];
+#else
+	info = &pxa300_freqs[CONFIG_PXA3XX_FREQ_IDX];
+#endif
+#endif
+	/* Setup CPU frequency */
+
+	accr &= ~(ACCR_XN_MASK | ACCR_XL_MASK | ACCR_XSPCLK_MASK);
+	accr |= ACCR_XN(info->core_xn) | ACCR_XL(info->core_xl);
+
+	/* No clock until core PLL is re-locked */
+	accr |= ACCR_XSPCLK(XSPCLK_NONE);
+
+	xclkcfg = (info->core_xn == 2) ? 0x3 : 0x2;     /* turbo bit */
+
+	writel(accr, ACCR);
+	__asm__("mcr p14, 0, %0, c6, c0, 0\n" : : "r"(xclkcfg));
+
+	while ((readl(ACSR) & mask) != (accr & mask));
+
+	/* Setup BUS frequency */
+
+	accr = readl(accr);
+	mask = ACCR_SMCFS_MASK | ACCR_SFLFS_MASK | ACCR_HSS_MASK | ACCR_DMCFS_MASK;
+
+	accr &= ~mask;
+	accr |= ACCR_SMCFS(info->smcfs) | ACCR_SFLFS(info->sflfs) |
+		ACCR_HSS(info->hss) | ACCR_DMCFS(info->dmcfs);
+
+	writel(accr, ACCR);
+
+	while ((readl(ACSR) & mask) != (accr & mask));
+}
+
 inline int arch_cpu_init(void)
 {
+	pxa_clock_setup();
 	return 0;
 }
 #endif	/* CONFIG_CPU_MONAHANS */
