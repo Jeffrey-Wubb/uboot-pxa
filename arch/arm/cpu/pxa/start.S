@@ -145,8 +145,10 @@ reset:
 	mcr	p15, 0, r0, c3, c0, 0
 
 	/* Point TTBR to MMU table */
-	ldr	r0, =mmu_table
 	adr	r2, _start
+	ldr	r0, =CONFIG_SYS_TEXT_BASE
+	sub	r2, r0
+	ldr	r0, =mmu_table
 	orr	r0, r2
 	mcr	p15, 0, r0, c2, c0, 0
 
