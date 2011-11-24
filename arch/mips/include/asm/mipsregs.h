@@ -89,6 +89,13 @@
 #define CP0_DWATCH $19
 
 /*
+ * Additional Coprocessor 0 register names.
+ * These registers are listed for completeness and are intended
+ * for usage in assembly code.
+ */
+#define CP0_EBASE $15,1
+
+/*
  * Coprocessor 0 Set 1 register names
  */
 #define CP0_S1_DERRADDR0  $26
@@ -393,6 +400,12 @@
 #define  CAUSEF_CE		(_ULCAST_(3)   << 28)
 #define  CAUSEB_BD		31
 #define  CAUSEF_BD		(_ULCAST_(1)   << 31)
+
+/*
+ * Bits in the coprocessor 0 EBase register.
+ */
+#define EBASEB_CPUNUM		0
+#define EBASEF_CPUNUM		(_ULCAST_(1023))
 
 /*
  * Bits in the coprocessor 0 config register.
