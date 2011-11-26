@@ -29,6 +29,9 @@
 #define	CPU_MASK_PXA_PRODID	0x3f0
 #define	CPU_VALUE_PXA25X	0x100
 #define	CPU_VALUE_PXA27X	0x110
+#define	CPU_VALUE_PXA30X	0x080
+#define	CPU_VALUE_PXA31X	0x090
+#define	CPU_VALUE_PXA32X	0x020
 
 static uint32_t pxa_get_cpuid(void)
 {
@@ -49,6 +52,27 @@ int cpu_is_pxa27x(void)
 	uint32_t id = pxa_get_cpuid();
 	id &= CPU_MASK_PXA_PRODID;
 	return id == CPU_VALUE_PXA27X;
+}
+
+int cpu_is_pxa30x(void)
+{
+	uint32_t id = pxa_get_cpuid();
+	id &= CPU_MASK_PXA_PRODID;
+	return id == CPU_VALUE_PXA30X;
+}
+
+int cpu_is_pxa31x(void)
+{
+	uint32_t id = pxa_get_cpuid();
+	id &= CPU_MASK_PXA_PRODID;
+	return id == CPU_VALUE_PXA31X;
+}
+
+int cpu_is_pxa32x(void)
+{
+	uint32_t id = pxa_get_cpuid();
+	id &= CPU_MASK_PXA_PRODID;
+	return id == CPU_VALUE_PXA32X;
 }
 
 #ifdef	CONFIG_DISPLAY_CPUINFO
@@ -101,6 +125,44 @@ static const char *pxa27x_get_revision(void)
 	return rev[id];
 }
 
+static const char *pxa3xx_get_revision(void)
+{
+	static const char *const rev30x[] = { "A0", "A1" };
+	static const char *const rev31x[] = { "A0", "A1", "A2", "B0" };
+	static const char *const rev32x[] = { "B1", "B2", "C0" };
+	static const char *unknown = "Unknown";
+	uint32_t id;
+
+	if (!(cpu_is_pxa30x() || cpu_is_pxa31x() || cpu_is_pxa32x()))
+		return unknown;
+
+	id = pxa_get_cpuid() & CPU_MASK_PXA_REVID;
+
+	if (cpu_is_pxa30x()) {
+		if (id < 2)
+			return rev30x[id];
+		else
+			return unknown;
+
+	}
+
+	if (cpu_is_pxa31x()) {
+		if (id < 4)
+			return rev31x[id];
+		else
+			return unknown;
+	}
+
+	if (cpu_is_pxa32x()) {
+		if ((id >= 5) || (id <= 7))
+			return rev32x[id - 5];
+		else
+			return unknown;
+	}
+
+	return unknown;
+}
+
 static int print_cpuinfo_pxa2xx(void)
 {
 	if (cpu_is_pxa25x()) {
@@ -117,6 +179,24 @@ static int print_cpuinfo_pxa2xx(void)
 	return 0;
 }
 
+static int print_cpuinfo_pxa3xx(void)
+{
+	if (cpu_is_pxa30x()) {
+		puts("Marvell PXA30x rev. ");
+	} else if (cpu_is_pxa31x()) {
+		puts("Marvell PXA31x rev. ");
+	} else if (cpu_is_pxa32x()) {
+		puts("Marvell PXA32x rev. ");
+	} else
+		return -EINVAL;
+
+	puts(pxa3xx_get_revision());
+
+	puts("\n");
+
+	return 0;
+}
+
 int print_cpuinfo(void)
 {
 	int ret;
@@ -124,6 +204,10 @@ int print_cpuinfo(void)
 	puts("CPU: ");
 
 	ret = print_cpuinfo_pxa2xx();
+	if (!ret)
+		return ret;
+
+	ret = print_cpuinfo_pxa3xx();
 	if (!ret)
 		return ret;
 
