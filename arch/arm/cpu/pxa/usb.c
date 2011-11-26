@@ -24,7 +24,7 @@
 #include <common.h>
 
 #if defined(CONFIG_USB_OHCI_NEW) && defined(CONFIG_SYS_USB_OHCI_CPU_INIT)
-# if defined(CONFIG_CPU_MONAHANS) || defined(CONFIG_CPU_PXA27X)
+# if defined(CONFIG_CPU_PXA3XX) || defined(CONFIG_CPU_PXA27X)
 
 #include <asm/arch/pxa-regs.h>
 #include <asm/io.h>
@@ -32,7 +32,7 @@
 
 int usb_cpu_init(void)
 {
-#if defined(CONFIG_CPU_MONAHANS)
+#if defined(CONFIG_CPU_PXA3XX)
 	/* Enable USB host clock. */
 	writel(readl(CKENA) | CKENA_2_USBHOST | CKENA_20_UDC, CKENA);
 	udelay(100);
@@ -42,7 +42,7 @@ int usb_cpu_init(void)
 	writel(readl(CKEN) | CKEN10_USBHOST, CKEN);
 #endif
 
-#if defined(CONFIG_CPU_MONAHANS)
+#if defined(CONFIG_CPU_PXA3XX)
 	/* Configure Port 2 for Host (USB Client Registers) */
 	writel(0x3000c, UP2OCR);
 #endif
@@ -55,7 +55,7 @@ int usb_cpu_init(void)
 	while (readl(UHCHR) & UHCHR_FSBIR)
 		udelay(1);
 
-#if defined(CONFIG_CPU_MONAHANS)
+#if defined(CONFIG_CPU_PXA3XX)
 	writel(readl(UHCHR) & ~UHCHR_SSEP0, UHCHR);
 #endif
 #if defined(CONFIG_CPU_PXA27X)
@@ -75,7 +75,7 @@ int usb_cpu_stop(void)
 	writel(readl(UHCCOMS) | UHCHR_FHR, UHCCOMS);
 	udelay(10);
 
-#if defined(CONFIG_CPU_MONAHANS)
+#if defined(CONFIG_CPU_PXA3XX)
 	writel(readl(UHCHR) | UHCHR_SSEP0, UHCHR);
 #endif
 #if defined(CONFIG_CPU_PXA27X)
@@ -83,7 +83,7 @@ int usb_cpu_stop(void)
 #endif
 	writel(readl(UHCHR) | UHCHR_SSEP1 | UHCHR_SSE, UHCHR);
 
-#if defined(CONFIG_CPU_MONAHANS)
+#if defined(CONFIG_CPU_PXA3XX)
 	/* Disable USB host clock. */
 	writel(readl(CKENA) & ~(CKENA_2_USBHOST | CKENA_20_UDC), CKENA);
 	udelay(100);
@@ -101,5 +101,5 @@ int usb_cpu_init_fail(void)
 	return usb_cpu_stop();
 }
 
-# endif /* defined(CONFIG_CPU_MONAHANS) || defined(CONFIG_CPU_PXA27X) */
+# endif /* defined(CONFIG_CPU_PXA3XX) || defined(CONFIG_CPU_PXA27X) */
 #endif /* defined(CONFIG_USB_OHCI) && defined(CONFIG_SYS_USB_OHCI_CPU_INIT) */

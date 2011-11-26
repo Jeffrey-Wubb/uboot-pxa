@@ -461,7 +461,7 @@ static int pxafb_init_mem (void *lcdbase, vidinfo_t *vid)
 
 	return 0;
 }
-#ifdef	CONFIG_CPU_MONAHANS
+#ifdef	CONFIG_CPU_PXA3XX
 static inline void pxafb_setup_gpio (vidinfo_t *vid) {}
 #else
 static void pxafb_setup_gpio (vidinfo_t *vid)
@@ -540,7 +540,7 @@ static void pxafb_enable_controller (vidinfo_t *vid)
 	writel(vid->pxa.fdadr1, FDADR1);
 	writel(readl(LCCR0) | LCCR0_ENB, LCCR0);
 
-#ifdef	CONFIG_CPU_MONAHANS
+#ifdef	CONFIG_CPU_PXA3XX
 	writel(readl(CKENA) | CKENA_1_LCD, CKENA);
 #else
 	writel(readl(CKEN) | CKEN16_LCD, CKEN);

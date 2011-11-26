@@ -129,7 +129,7 @@ mmc_block_read(uchar * dst, uint32_t src, int len)
 	writel(~MMC_I_MASK_RXFIFO_RD_REQ, MMC_I_MASK);
 	while (len) {
 		if (readl(MMC_I_REG) & MMC_I_REG_RXFIFO_RD_REQ) {
-#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_MONAHANS)
+#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_PXA3XX)
 			int i;
 			for (i = min(len, 32); i; i--) {
 				*dst++ = readb(MMC_RXFIFO);
@@ -565,7 +565,7 @@ mmc_legacy_init(int verbose)
 	set_GPIO_mode(GPIO6_MMCCLK_MD);
 	set_GPIO_mode(GPIO8_MMCCS0_MD);
 #endif
-#ifdef CONFIG_CPU_MONAHANS	/* pxa3xx */
+#ifdef CONFIG_CPU_PXA3XX	/* pxa3xx */
 	writel(readl(CKENA) | CKENA_12_MMC0 | CKENA_13_MMC1, CKENA);
 #else	/* pxa2xx */
 	writel(readl(CKEN) | CKEN12_MMC, CKEN);	/* enable MMC unit clock */
@@ -634,7 +634,7 @@ mmc_legacy_init(int verbose)
 	writel(0, MMC_CLKRT);		/* 20 MHz */
 	resp = mmc_cmd(MMC_CMD_SELECT_CARD, rca, 0, MMC_CMDAT_R1);
 
-#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_MONAHANS)
+#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_PXA3XX)
 	if (IF_TYPE_SD == mmc_dev.if_type) {
 		resp = mmc_cmd(MMC_CMD_APP_CMD, rca, 0, MMC_CMDAT_R1);
 		resp = mmc_cmd(SD_CMD_APP_SET_BUS_WIDTH, 0, 2, MMC_CMDAT_R1);

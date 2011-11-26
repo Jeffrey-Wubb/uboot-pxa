@@ -33,7 +33,7 @@ typedef void		(*ExcpHndlr) (void) ;
 /*
  * PXA Chip selects
  */
-#ifdef CONFIG_CPU_MONAHANS
+#ifdef CONFIG_CPU_PXA3XX
 #define PXA_CS0_PHYS   0x00000000 /* for both small and large same start */
 #define PXA_CS1_PHYS   0x04000000 /* Small partition start address (64MB) */
 #define PXA_CS1_LPHYS  0x30000000 /* Large partition start address (256MB) */
@@ -47,7 +47,7 @@ typedef void		(*ExcpHndlr) (void) ;
 #define PXA_CS3_PHYS	0x0C000000
 #define PXA_CS4_PHYS	0x10000000
 #define PXA_CS5_PHYS	0x14000000
-#endif /* CONFIG_CPU_MONAHANS */
+#endif /* CONFIG_CPU_PXA3XX */
 
 /*
  * Personal Computer Memory Card International Association (PCMCIA) sockets
@@ -58,7 +58,7 @@ typedef void		(*ExcpHndlr) (void) ;
 #define PCMCIAAttrSp	PCMCIAPrtSp	/* PCMCIA Attribute Space [byte]   */
 #define PCMCIAMemSp	PCMCIAPrtSp	/* PCMCIA Memory Space [byte]	   */
 
-#ifndef CONFIG_CPU_MONAHANS             /* Monahans supports only one slot */
+#ifndef CONFIG_CPU_PXA3XX             /* Monahans supports only one slot */
 #define PCMCIA0Sp	PCMCIASp	/* PCMCIA 0 Space [byte]	   */
 #define PCMCIA0IOSp	PCMCIAIOSp	/* PCMCIA 0 I/O Space [byte]	   */
 #define PCMCIA0AttrSp	PCMCIAAttrSp	/* PCMCIA 0 Attribute Space [byte] */
@@ -83,7 +83,7 @@ typedef void		(*ExcpHndlr) (void) ;
 #define _PCMCIA0Attr	_PCMCIAAttr (0) /* PCMCIA 0 Attribute		   */
 #define _PCMCIA0Mem	_PCMCIAMem (0)	/* PCMCIA 0 Memory		   */
 
-#ifndef CONFIG_CPU_MONAHANS             /* Monahans supports only one slot */
+#ifndef CONFIG_CPU_PXA3XX             /* Monahans supports only one slot */
 #define _PCMCIA1	_PCMCIA (1)	/* PCMCIA 1			   */
 #define _PCMCIA1IO	_PCMCIAIO (1)	/* PCMCIA 1 I/O			   */
 #define _PCMCIA1Attr	_PCMCIAAttr (1) /* PCMCIA 1 Attribute		   */
@@ -109,7 +109,7 @@ typedef void		(*ExcpHndlr) (void) ;
 #define DCSR13		0x40000034  /* DMA Control / Status Register for Channel 13 */
 #define DCSR14		0x40000038  /* DMA Control / Status Register for Channel 14 */
 #define DCSR15		0x4000003c  /* DMA Control / Status Register for Channel 15 */
-#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_MONAHANS)
+#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_PXA3XX)
 #define DCSR16		0x40000040  /* DMA Control / Status Register for Channel 16 */
 #define DCSR17		0x40000044  /* DMA Control / Status Register for Channel 17 */
 #define DCSR18		0x40000048  /* DMA Control / Status Register for Channel 18 */
@@ -126,7 +126,7 @@ typedef void		(*ExcpHndlr) (void) ;
 #define DCSR29		0x40000074  /* DMA Control / Status Register for Channel 29 */
 #define DCSR30		0x40000078  /* DMA Control / Status Register for Channel 30 */
 #define DCSR31		0x4000007c  /* DMA Control / Status Register for Channel 31 */
-#endif /* CONFIG_CPU_PXA27X || CONFIG_CPU_MONAHANS */
+#endif /* CONFIG_CPU_PXA27X || CONFIG_CPU_PXA3XX */
 
 #define DCSR(x)		(0x40000000 | ((x) << 2))
 
@@ -134,7 +134,7 @@ typedef void		(*ExcpHndlr) (void) ;
 #define DCSR_NODESC	(1 << 30)	/* No-Descriptor Fetch (read / write) */
 #define DCSR_STOPIRQEN	(1 << 29)	/* Stop Interrupt Enable (read / write) */
 
-#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_MONAHANS)
+#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_PXA3XX)
 #define DCSR_EORIRQEN	(1 << 28)	/* End of Receive Interrupt Enable (R/W) */
 #define DCSR_EORJMPEN	(1 << 27)	/* Jump to next descriptor on EOR */
 #define DCSR_EORSTOPEN	(1 << 26)	/* STOP on an EOR */
@@ -438,7 +438,7 @@ typedef void		(*ExcpHndlr) (void) ;
 /*
  * USB Device Controller
  */
-#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_MONAHANS)
+#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_PXA3XX)
 
 #define UDCCR		0x40600000	/* UDC Control Register */
 #define UDCCR_UDE	(1 << 0)		/* UDC enable */
@@ -799,7 +799,7 @@ typedef void		(*ExcpHndlr) (void) ;
 
 #endif /* CONFIG_CPU_PXA27X */
 
-#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_MONAHANS)
+#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_PXA3XX)
 
 /******************************************************************************/
 /*
@@ -870,7 +870,7 @@ typedef void		(*ExcpHndlr) (void) ;
 #define UP2OCR_CPVPE	(1<<1)
 #define UP2OCR_CPVEN	(1<<0)
 
-#endif	/* CONFIG_CPU_PXA27X || CONFIG_CPU_MONAHANS */
+#endif	/* CONFIG_CPU_PXA27X || CONFIG_CPU_PXA3XX */
 
 /******************************************************************************/
 /*
@@ -923,7 +923,7 @@ typedef void		(*ExcpHndlr) (void) ;
 #define OWER		0x40A00018  /* OS Timer Watchdog Enable Register */
 #define OIER		0x40A0001C  /* OS Timer Interrupt Enable Register */
 
-#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_MONAHANS)
+#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_PXA3XX)
 #define OSCR4		0x40A00040  /* OS Timer Counter Register 4 */
 #define OSCR5		0x40A00044  /* OS Timer Counter Register 5 */
 #define OSCR6		0x40A00048  /* OS Timer Counter Register 6 */
@@ -951,7 +951,7 @@ typedef void		(*ExcpHndlr) (void) ;
 #define OMCR10		0x40A000D8  /* OS Match Control Register 10 */
 #define OMCR11		0x40A000DC  /* OS Match Control Register 11 */
 
-#endif /* CONFIG_CPU_PXA27X || CONFIG_CPU_MONAHANS */
+#endif /* CONFIG_CPU_PXA27X || CONFIG_CPU_PXA3XX */
 
 #define OSSR_M4		(1 << 4)	/* Match status channel 4 */
 #define OSSR_M3		(1 << 3)	/* Match status channel 3 */
@@ -974,7 +974,7 @@ typedef void		(*ExcpHndlr) (void) ;
  * Core Clock
  */
 
-#if defined(CONFIG_CPU_MONAHANS)
+#if defined(CONFIG_CPU_PXA3XX)
 #define ACCR		0x41340000  /* Application Subsystem Clock Configuration Register */
 #define ACSR		0x41340004  /* Application Subsystem Clock Status Register */
 #define AICSR		0x41340008  /* Application Subsystem Interrupt Control/Status Register */
@@ -1033,7 +1033,7 @@ typedef void		(*ExcpHndlr) (void) ;
 #define CKENB_1_PWM1	(1 << 1)	/* PWM2 & PWM3 Clock Enable */
 #define CKENB_0_PWM0	(1 << 0)	/* PWM0 & PWM1 Clock Enable */
 
-#else /* if defined CONFIG_CPU_MONAHANS */
+#else /* if defined CONFIG_CPU_PXA3XX */
 
 #define CCCR		0x41300000  /* Core Clock Configuration Register */
 #define CKEN		0x41300004  /* Clock Enable Register */
@@ -1106,7 +1106,7 @@ typedef void		(*ExcpHndlr) (void) ;
 #define	 CCCR_N30      (0x6 << 7)
 #endif
 
-#endif /* CONFIG_CPU_MONAHANS */
+#endif /* CONFIG_CPU_PXA3XX */
 
 /******************************************************************************/
 /*
@@ -1120,7 +1120,7 @@ typedef void		(*ExcpHndlr) (void) ;
 #define PWM_PWDUTY1	0x40C00004  /* PWM 1 Duty Cycle Register */
 #define PWM_PERVAL1	0x40C00008  /* PWM 1 Period Control Register */
 
-#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_MONAHANS)
+#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_PXA3XX)
 #define PWM_CTRL2	0x40B00010  /* PWM 2 Control Register */
 #define PWM_PWDUTY2	0x40B00014  /* PWM 2 Duty Cycle Register */
 #define PWM_PERVAL2	0x40B00018  /* PWM 2 Period Control Register */
@@ -1128,7 +1128,7 @@ typedef void		(*ExcpHndlr) (void) ;
 #define PWM_CTRL3	0x40C00010  /* PWM 3 Control Register */
 #define PWM_PWDUTY3	0x40C00014  /* PWM 3 Duty Cycle Register */
 #define PWM_PERVAL3	0x40C00018  /* PWM 3 Period Control Register */
-#endif /* CONFIG_CPU_PXA27X || CONFIG_CPU_MONAHANS */
+#endif /* CONFIG_CPU_PXA27X || CONFIG_CPU_PXA3XX */
 
 /*
  * Interrupt Controller
@@ -1140,14 +1140,14 @@ typedef void		(*ExcpHndlr) (void) ;
 #define ICPR		0x40D00010  /* Interrupt Controller Pending Register */
 #define ICCR		0x40D00014  /* Interrupt Controller Control Register */
 
-#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_MONAHANS)
+#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_PXA3XX)
 #define ICHP		0x40D00018  /* Interrupt Controller Highest Priority Register */
 #define ICIP2		0x40D0009C  /* Interrupt Controller IRQ Pending Register 2 */
 #define ICMR2		0x40D000A0  /* Interrupt Controller Mask Register 2 */
 #define ICLR2		0x40D000A4  /* Interrupt Controller Level Register 2 */
 #define ICFP2		0x40D000A8  /* Interrupt Controller FIQ Pending Register 2 */
 #define ICPR2		0x40D000AC  /* Interrupt Controller Pending Register 2 */
-#endif /* CONFIG_CPU_PXA27X || CONFIG_CPU_MONAHANS */
+#endif /* CONFIG_CPU_PXA27X || CONFIG_CPU_PXA3XX */
 
 /******************************************************************************/
 /*
@@ -1188,7 +1188,7 @@ typedef void		(*ExcpHndlr) (void) ;
 #define GAFR2_L		0x40E00064  /* GPIO Alternate Function Select Register GPIO<79:64> */
 #define GAFR2_U		0x40E00068  /* GPIO Alternate Function Select Register GPIO 80 */
 
-#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_MONAHANS)
+#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_PXA3XX)
 #define GPLR3		0x40E00100  /* GPIO Pin-Level Register GPIO<127:96> */
 #define GPDR3		0x40E0010C  /* GPIO Pin Direction Register GPIO<127:96> */
 #define GPSR3		0x40E00118  /* GPIO Pin Output Set Register GPIO<127:96> */
@@ -1198,9 +1198,9 @@ typedef void		(*ExcpHndlr) (void) ;
 #define GEDR3		0x40E00148  /* GPIO Edge Detect Status Register GPIO<127:96> */
 #define GAFR3_L		0x40E0006C  /* GPIO Alternate Function Select Register GPIO<111:96> */
 #define GAFR3_U		0x40E00070  /* GPIO Alternate Function Select Register GPIO<127:112> */
-#endif /* CONFIG_CPU_PXA27X || CONFIG_CPU_MONAHANS */
+#endif /* CONFIG_CPU_PXA27X || CONFIG_CPU_PXA3XX */
 
-#ifdef CONFIG_CPU_MONAHANS
+#ifdef CONFIG_CPU_PXA3XX
 #define GSDR0		0x40E00400 /* Bit-wise Set of GPDR[31:0] */
 #define GSDR1		0x40E00404 /* Bit-wise Set of GPDR[63:32] */
 #define GSDR2		0x40E00408 /* Bit-wise Set of GPDR[95:64] */
@@ -1244,7 +1244,7 @@ typedef void		(*ExcpHndlr) (void) ;
 #define _GEDR(x)	(0x40E00048 + (((x) & 0x60) >> 3))
 #define _GAFR(x)	(0x40E00054 + (((x) & 0x70) >> 2))
 
-#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_MONAHANS)
+#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_PXA3XX)
 #define GPLR(x)		(((((x) & 0x7f) < 96) ? _GPLR(x) : GPLR3))
 #define GPDR(x)		(((((x) & 0x7f) < 96) ? _GPDR(x) : GPDR3))
 #define GPSR(x)		(((((x) & 0x7f) < 96) ? _GPSR(x) : GPSR3))
@@ -1656,7 +1656,7 @@ typedef void		(*ExcpHndlr) (void) ;
 #endif
 #endif
 
-#ifdef CONFIG_CPU_MONAHANS
+#ifdef CONFIG_CPU_PXA3XX
 /* MFPR Bit Definitions, see 4-10, Vol. 1 */
 #define PULL_SEL	0x8000
 #define PULLUP_EN	0x4000
@@ -1687,7 +1687,7 @@ typedef void		(*ExcpHndlr) (void) ;
 #define AF_SEL_6	0x6	/* Alternate function 6 */
 #define AF_SEL_7	0x7	/* Alternate function 7 */
 
-#endif /* CONFIG_CPU_MONAHANS */
+#endif /* CONFIG_CPU_PXA3XX */
 
 /* GPIO alternate function assignments */
 
@@ -1893,7 +1893,7 @@ typedef void		(*ExcpHndlr) (void) ;
 /*
  * Power Manager
  */
-#ifdef CONFIG_CPU_MONAHANS
+#ifdef CONFIG_CPU_PXA3XX
 
 #define ASCR		0x40F40000  /* Application Subsystem Power Status/Control Register */
 #define ARSR		0x40F40004  /* Application Subsystem Reset Status Register */
@@ -1964,7 +1964,7 @@ typedef void		(*ExcpHndlr) (void) ;
 #define PVCR_ReadPointer           0x01f00000
 #define PVCR_SlaveAddress          (0x7f)
 
-#else /* ifdef CONFIG_CPU_MONAHANS */
+#else /* ifdef CONFIG_CPU_PXA3XX */
 
 #define PMCR		0x40F00000  /* Power Manager Control Register */
 #define PSSR		0x40F00004  /* Power Manager Sleep Status Register */
@@ -2049,7 +2049,7 @@ typedef void		(*ExcpHndlr) (void) ;
 #define RCSR_WDR	(1 << 1)	/* Watchdog Reset */
 #define RCSR_HWR	(1 << 0)	/* Hardware Reset */
 
-#endif /* CONFIG_CPU_MONAHANS */
+#endif /* CONFIG_CPU_PXA3XX */
 
 /*
  * SSP Serial Port Registers
@@ -2258,7 +2258,7 @@ typedef void		(*ExcpHndlr) (void) ;
  * Memory controller
  */
 
-#ifdef CONFIG_CPU_MONAHANS
+#ifdef CONFIG_CPU_PXA3XX
 
 /* PXA3xx */
 
@@ -2415,7 +2415,7 @@ typedef void		(*ExcpHndlr) (void) ;
 #define DFC_CLOCK	104		/* DFC Clock is 104 MHz */
 #define DFC_CLK_PER_US	DFC_CLOCK/1000	/* clock period in ns */
 
-#else /* CONFIG_CPU_MONAHANS */
+#else /* CONFIG_CPU_PXA3XX */
 
 /* PXA2xx */
 

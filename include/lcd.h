@@ -88,7 +88,7 @@ typedef struct vidinfo {
 } vidinfo_t;
 
 #elif defined(CONFIG_CPU_PXA25X) || defined(CONFIG_CPU_PXA27X) || \
-	defined CONFIG_CPU_MONAHANS
+	defined CONFIG_CPU_PXA3XX
 /*
  * PXA LCD DMA descriptor
  */

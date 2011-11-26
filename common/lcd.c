@@ -42,7 +42,7 @@
 #include <watchdog.h>
 
 #if defined(CONFIG_CPU_PXA25X) || defined(CONFIG_CPU_PXA27X) || \
-	defined(CONFIG_CPU_MONAHANS)
+	defined(CONFIG_CPU_PXA3XX)
 #define CONFIG_CPU_PXA
 #include <asm/byteorder.h>
 #endif

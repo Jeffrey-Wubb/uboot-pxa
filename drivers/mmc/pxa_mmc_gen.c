@@ -41,7 +41,7 @@
 #define PXAMMC_MIN_SPEED	304000
 #define PXAMMC_MAX_SPEED	19500000
 #define PXAMMC_HOST_CAPS	(MMC_MODE_4BIT)
-#elif defined(CONFIG_CPU_MONAHANS)
+#elif defined(CONFIG_CPU_PXA3XX)
 #define PXAMMC_FIFO_SIZE	32
 #define PXAMMC_MIN_SPEED	304000
 #define PXAMMC_MAX_SPEED	26000000
@@ -419,7 +419,7 @@ int pxa_mmc_register(int card_index)
 
 	mmc->b_max = 0;
 
-#ifndef	CONFIG_CPU_MONAHANS	/* PXA2xx */
+#ifndef	CONFIG_CPU_PXA3XX	/* PXA2xx */
 	reg = readl(CKEN);
 	reg |= CKEN12_MMC;
 	writel(reg, CKEN);

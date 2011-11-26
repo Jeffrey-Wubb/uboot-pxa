@@ -43,7 +43,7 @@ DECLARE_GLOBAL_DATA_PTR;
  * The numbering scheme differs here for PXA25x, PXA27x and PXA3xx so we can
  * easily handle enabling of clock.
  */
-#ifdef	CONFIG_CPU_MONAHANS
+#ifdef	CONFIG_CPU_PXA3XX
 #define	UART_CLK_BASE	CKENA_21_BTUART
 #define	UART_CLK_REG	CKENA
 #define	BTUART_INDEX	0

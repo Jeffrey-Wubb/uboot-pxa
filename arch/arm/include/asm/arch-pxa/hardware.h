@@ -22,16 +22,16 @@
 #include <asm/mach-types.h>
 
 /*
- * Define CONFIG_CPU_MONAHANS in case some CPU of the PXA3xx family is selected.
+ * Define CONFIG_CPU_PXA3XX in case some CPU of the PXA3xx family is selected.
  * PXA300/310/320 all have distinct register mappings in some cases, that's why
- * the exact CPU has to be selected. CONFIG_CPU_MONAHANS is a helper for common
+ * the exact CPU has to be selected. CONFIG_CPU_PXA3XX is a helper for common
  * drivers and compatibility glue with old source then.
  */
-#ifndef	CONFIG_CPU_MONAHANS
+#ifndef	CONFIG_CPU_PXA3XX
 #if	defined(CONFIG_CPU_PXA300) || \
 	defined(CONFIG_CPU_PXA310) || \
 	defined(CONFIG_CPU_PXA320)
-#define	CONFIG_CPU_MONAHANS
+#define	CONFIG_CPU_PXA3XX
 #endif
 #endif
 

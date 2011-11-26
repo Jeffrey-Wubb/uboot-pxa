@@ -34,7 +34,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define	timestamp	(gd->tbl)
 #define	lastinc		(gd->lastinc)
 
-#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_MONAHANS)
+#if defined(CONFIG_CPU_PXA27X) || defined(CONFIG_CPU_PXA3XX)
 #define	TIMER_FREQ_HZ	3250000
 #elif defined(CONFIG_CPU_PXA25X)
 #define	TIMER_FREQ_HZ	3686400
