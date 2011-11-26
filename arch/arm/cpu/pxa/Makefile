@@ -29,6 +29,7 @@ START	= start.o
 
 COBJS-$(CONFIG_CPU_PXA25X)	= pxa2xx.o
 COBJS-$(CONFIG_CPU_PXA27X)	= pxa2xx.o
+COBJS-$(CONFIG_CPU_PXA3XX)	= pxa3xx.o
 
 COBJS-y	+= cpuinfo.o
 
