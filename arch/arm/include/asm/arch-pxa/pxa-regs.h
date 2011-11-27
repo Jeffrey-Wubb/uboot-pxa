@@ -2280,53 +2280,6 @@ typedef void		(*ExcpHndlr) (void) ;
 #define	CLK_RET_DEL	0x4A0000B0 /* Delay line and mux selects for return data latching for sync. flash */
 #define	ADV_RET_DEL	0x4A0000B4 /* Delay line and mux selects for return data latching for sync. flash */
 
-/* Dynamic Memory Controller Registers */
-#define	MDCNFG		0x48100000 /* SDRAM Configuration Register 0 */
-#define	MDREFR		0x48100004 /* SDRAM Refresh Control Register */
-#define	FLYCNFG		0x48100020 /* Fly-by DMA DVAL[1:0] polarities */
-#define	MDMRS		0x48100040 /* MRS value to be written to SDRAM */
-#define	DDR_SCAL	0x48100050 /* Software Delay Line Calibration/Configuration for external DDR memory. */
-#define	DDR_HCAL	0x48100060 /* Hardware Delay Line Calibration/Configuration for external DDR memory. */
-#define	DDR_WCAL	0x48100068 /* DDR Write Strobe Calibration Register */
-#define	DMCIER		0x48100070 /* Dynamic MC Interrupt Enable Register. */
-#define	DMCISR		0x48100078 /* Dynamic MC Interrupt Status Register. */
-#define	DDR_DLS		0x48100080 /* DDR Delay Line Value Status register for external DDR memory. */
-#define	EMPI		0x48100090 /* EMPI Control Register */
-#define	RCOMP		0x48100100
-#define	PAD_MA		0x48100110
-#define	PAD_MDMSB	0x48100114
-#define	PAD_MDLSB	0x48100118
-#define	PAD_DMEM	0x4810011c
-#define	PAD_SDCLK	0x48100120
-#define	PAD_SDCS	0x48100124
-#define	PAD_SMEM	0x48100128
-#define	PAD_SCLK	0x4810012C
-#define	TAI		0x48100F00 /* TAI Tavor Address Isolation Register */
-
-/* Some frequently used bits */
-#define MDCNFG_DMAP	0x80000000	/* SDRAM 1GB Memory Map Enable */
-#define MDCNFG_DMCEN	0x40000000	/* Enable Dynamic Memory Controller */
-#define MDCNFG_HWFREQ	0x20000000	/* Hardware Frequency Change Calibration */
-#define MDCNFG_DTYPE	0x400		/* SDRAM Type: 1=DDR SDRAM */
-
-#define MDCNFG_DTC_0	0x0		/* Timing Category of SDRAM */
-#define MDCNFG_DTC_1	0x100
-#define MDCNFG_DTC_2	0x200
-#define MDCNFG_DTC_3	0x300
-
-#define MDCNFG_DRAC_12	0x0		/* Number of Row Access Bits */
-#define MDCNFG_DRAC_13	0x20
-#define MDCNFG_DRAC_14	0x40
-
-#define MDCNFG_DCAC_9	0x0		/* Number of Column Acess Bits */
-#define MDCNFG_DCAC_10	0x08
-#define MDCNFG_DCAC_11	0x10
-
-#define MDCNFG_DBW_16	0x4		/* SDRAM Data Bus width 16bit */
-#define MDCNFG_DCSE1	0x2		/* SDRAM CS 1 Enable */
-#define MDCNFG_DCSE0	0x1		/* SDRAM CS 0 Enable */
-
-
 /* Data Flash Controller Registers */
 
 #define NDCR		0x43100000  /* Data Flash Control register */
