@@ -81,7 +81,12 @@
  */
 LEAF(mips_init_icache)
 	blez		a1, 9f
+#ifdef CONFIG_SYS_MIPS_CACHE_EXT_INIT
+	mtc0		zero, CP0_ITAGLO
+	mtc0		zero, CP0_IDATALO
+#else
 	mtc0		zero, CP0_TAGLO
+#endif
 	/* clear tag to invalidate */
 	PTR_LI		t0, INDEX_BASE
 	PTR_ADDU	t1, t0, a1
@@ -106,7 +111,12 @@ LEAF(mips_init_icache)
  */
 LEAF(mips_init_dcache)
 	blez		a1, 9f
+#ifdef CONFIG_SYS_MIPS_CACHE_EXT_INIT
+	mtc0		zero, CP0_DTAGLO
+	mtc0		zero, CP0_DDATALO
+#else
 	mtc0		zero, CP0_TAGLO
+#endif
 	/* clear all tags */
 	PTR_LI		t0, INDEX_BASE
 	PTR_ADDU	t1, t0, a1

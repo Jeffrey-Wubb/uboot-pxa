@@ -93,7 +93,14 @@
  * These registers are listed for completeness and are intended
  * for usage in assembly code.
  */
-#define CP0_EBASE $15,1
+#define CP0_EBASE	$15,1
+/* L1 I-Cache */
+#define CP0_ITAGLO	$28
+#define CP0_IDATALO	$28,1
+#define CP0_IDATAHI	$29,1
+/* L1 D-Cache */
+#define CP0_DTAGLO	$28,2
+#define CP0_DDATALO	$28,3
 
 /*
  * Coprocessor 0 Set 1 register names
