@@ -55,163 +55,61 @@
 #endif
 	.endm
 
-#define RVECENT(f,n) \
-   b f; nop
-#define XVECENT(f,bev) \
-   b f     ;           \
-   li k0,bev
-
-	.set noreorder
-
-	.globl _start
-	.text
-_start:
-	RVECENT(reset,0)			# U-boot entry point
-	RVECENT(reset,1)			# software reboot
-#ifdef CONFIG_SYS_XWAY_EBU_BOOTCFG
 	/*
 	 * Almost all Lantiq XWAY SoC devices have an external bus unit (EBU) to
 	 * access external NOR flashes. If the board boots from NOR flash the
 	 * internal BootROM does a blind read at address 0xB0000010 to read the
 	 * initial configuration for that EBU in order to access the flash
 	 * device with correct parameters. This config option is board-specific.
+	 * Default to 0 if this option is not set.
 	 */
-	.word CONFIG_SYS_XWAY_EBU_BOOTCFG
-	.word 0x00000000
+	.macro lantiq_soc_bootcfg
+	.set	push
+	.set	noreorder
+	.org	0x10
+#ifdef CONFIG_SYS_XWAY_EBU_BOOTCFG
+	.word	CONFIG_SYS_XWAY_EBU_BOOTCFG
 #else
-	RVECENT(romReserved,2)
+	.word	0
 #endif
-	RVECENT(romReserved,3)
-	RVECENT(romReserved,4)
-	RVECENT(romReserved,5)
-	RVECENT(romReserved,6)
-	RVECENT(romReserved,7)
-	RVECENT(romReserved,8)
-	RVECENT(romReserved,9)
-	RVECENT(romReserved,10)
-	RVECENT(romReserved,11)
-	RVECENT(romReserved,12)
-	RVECENT(romReserved,13)
-	RVECENT(romReserved,14)
-	RVECENT(romReserved,15)
-	RVECENT(romReserved,16)
-	RVECENT(romReserved,17)
-	RVECENT(romReserved,18)
-	RVECENT(romReserved,19)
-	RVECENT(romReserved,20)
-	RVECENT(romReserved,21)
-	RVECENT(romReserved,22)
-	RVECENT(romReserved,23)
-	RVECENT(romReserved,24)
-	RVECENT(romReserved,25)
-	RVECENT(romReserved,26)
-	RVECENT(romReserved,27)
-	RVECENT(romReserved,28)
-	RVECENT(romReserved,29)
-	RVECENT(romReserved,30)
-	RVECENT(romReserved,31)
-	RVECENT(romReserved,32)
-	RVECENT(romReserved,33)
-	RVECENT(romReserved,34)
-	RVECENT(romReserved,35)
-	RVECENT(romReserved,36)
-	RVECENT(romReserved,37)
-	RVECENT(romReserved,38)
-	RVECENT(romReserved,39)
-	RVECENT(romReserved,40)
-	RVECENT(romReserved,41)
-	RVECENT(romReserved,42)
-	RVECENT(romReserved,43)
-	RVECENT(romReserved,44)
-	RVECENT(romReserved,45)
-	RVECENT(romReserved,46)
-	RVECENT(romReserved,47)
-	RVECENT(romReserved,48)
-	RVECENT(romReserved,49)
-	RVECENT(romReserved,50)
-	RVECENT(romReserved,51)
-	RVECENT(romReserved,52)
-	RVECENT(romReserved,53)
-	RVECENT(romReserved,54)
-	RVECENT(romReserved,55)
-	RVECENT(romReserved,56)
-	RVECENT(romReserved,57)
-	RVECENT(romReserved,58)
-	RVECENT(romReserved,59)
-	RVECENT(romReserved,60)
-	RVECENT(romReserved,61)
-	RVECENT(romReserved,62)
-	RVECENT(romReserved,63)
-	XVECENT(romExcHandle,0x200)	# bfc00200: R4000 tlbmiss vector
-	RVECENT(romReserved,65)
-	RVECENT(romReserved,66)
-	RVECENT(romReserved,67)
-	RVECENT(romReserved,68)
-	RVECENT(romReserved,69)
-	RVECENT(romReserved,70)
-	RVECENT(romReserved,71)
-	RVECENT(romReserved,72)
-	RVECENT(romReserved,73)
-	RVECENT(romReserved,74)
-	RVECENT(romReserved,75)
-	RVECENT(romReserved,76)
-	RVECENT(romReserved,77)
-	RVECENT(romReserved,78)
-	RVECENT(romReserved,79)
-	XVECENT(romExcHandle,0x280)	# bfc00280: R4000 xtlbmiss vector
-	RVECENT(romReserved,81)
-	RVECENT(romReserved,82)
-	RVECENT(romReserved,83)
-	RVECENT(romReserved,84)
-	RVECENT(romReserved,85)
-	RVECENT(romReserved,86)
-	RVECENT(romReserved,87)
-	RVECENT(romReserved,88)
-	RVECENT(romReserved,89)
-	RVECENT(romReserved,90)
-	RVECENT(romReserved,91)
-	RVECENT(romReserved,92)
-	RVECENT(romReserved,93)
-	RVECENT(romReserved,94)
-	RVECENT(romReserved,95)
-	XVECENT(romExcHandle,0x300)	# bfc00300: R4000 cache vector
-	RVECENT(romReserved,97)
-	RVECENT(romReserved,98)
-	RVECENT(romReserved,99)
-	RVECENT(romReserved,100)
-	RVECENT(romReserved,101)
-	RVECENT(romReserved,102)
-	RVECENT(romReserved,103)
-	RVECENT(romReserved,104)
-	RVECENT(romReserved,105)
-	RVECENT(romReserved,106)
-	RVECENT(romReserved,107)
-	RVECENT(romReserved,108)
-	RVECENT(romReserved,109)
-	RVECENT(romReserved,110)
-	RVECENT(romReserved,111)
-	XVECENT(romExcHandle,0x380)	# bfc00380: R4000 general vector
-	RVECENT(romReserved,113)
-	RVECENT(romReserved,114)
-	RVECENT(romReserved,115)
-	RVECENT(romReserved,116)
-	RVECENT(romReserved,116)
-	RVECENT(romReserved,118)
-	RVECENT(romReserved,119)
-	RVECENT(romReserved,120)
-	RVECENT(romReserved,121)
-	RVECENT(romReserved,122)
-	RVECENT(romReserved,123)
-	RVECENT(romReserved,124)
-	RVECENT(romReserved,125)
-	RVECENT(romReserved,126)
-	RVECENT(romReserved,127)
+	.word	0
+	.set	pop
+	.endm
 
-	/*
-	 * We hope there are no more reserved vectors!
-	 * 128 * 8 == 1024 == 0x400
-	 * so this is address R_VEC+0x400 == 0xbfc00400
-	 */
+	.macro reset_vector branch
+	.set	push
+	.set	noreorder
+	b	\branch
+	 nop
+	.set	pop
+	.endm
+
+	.macro exception_vector offset branch
+	.set	push
+	.set	noreorder
+	.org	\offset
+	b	\branch
+	 li	k0, \offset
+	.set	pop
+	.endm
+
+	.set noreorder
+
+	.globl _start
+	.text
+_start:
+	reset_vector reset			# U-boot entry point
+	reset_vector reset			# software reboot
+
+	lantiq_soc_bootcfg 			# Lantiq SoC Boot config word
+
+	exception_vector 0x200, halt		# TLB miss
+	exception_vector 0x280, halt		# XTLB miss
+	exception_vector 0x300, halt		# Cache error
+	exception_vector 0x380, halt		# General
+	exception_vector 0x400, halt		# Interrupt, CauseIV
+	exception_vector 0x480, ejtag_exception	# EJTAG debug
+
 	.align 4
 reset:
 
@@ -378,8 +276,12 @@ in_ram:
 	.end	relocate_code
 
 	/* Exception handlers */
-romReserved:
-	b	romReserved
+ejtag_exception:
+	/* Set DEPC to halt and exit debug mode */
+	la	k1, halt
+	mtc0	k1, CP0_DEPC
+	deret
+	 nop
 
-romExcHandle:
-	b	romExcHandle
+halt:
+	b	halt
