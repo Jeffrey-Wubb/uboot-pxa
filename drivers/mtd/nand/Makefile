@@ -35,10 +35,10 @@ COBJS-y	+= nand_spl_load.o
 endif
 else
 COBJS-y += nand.o
-COBJS-y += nand_bbt.o
-COBJS-y += nand_ids.o
 COBJS-y += nand_util.o
 endif
+COBJS-y += nand_bbt.o
+COBJS-y += nand_ids.o
 COBJS-y += nand_ecc.o
 COBJS-y += nand_base.o
 
