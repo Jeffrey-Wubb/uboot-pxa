@@ -432,6 +432,7 @@ struct nand_buffers {
  * @errstat:		[OPTIONAL] hardware specific function to perform additional error status checks
  *			(determine if errors are correctable)
  * @write_page:		[REPLACEABLE] High-level page write function
+ * @scan:		[REPLACEABLE] Fill in the chip size and other parameters
  */
 
 struct nand_chip {
@@ -456,6 +457,7 @@ struct nand_chip {
 	int		(*errstat)(struct mtd_info *mtd, struct nand_chip *this, int state, int status, int page);
 	int		(*write_page)(struct mtd_info *mtd, struct nand_chip *chip,
 				      const uint8_t *buf, int page, int cached, int raw);
+	int		(*scan)(struct mtd_info *mtd);
 
 	int		chip_delay;
 	unsigned int	options;

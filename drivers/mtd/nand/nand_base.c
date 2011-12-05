@@ -2974,10 +2974,16 @@ int nand_scan_tail(struct mtd_info *mtd)
 int nand_scan(struct mtd_info *mtd, int maxchips)
 {
 	int ret;
+	struct nand_chip *nand = mtd->priv;
 
-	ret = nand_scan_ident(mtd, maxchips, NULL);
-	if (!ret)
-		ret = nand_scan_tail(mtd);
+	if (nand->scan) {
+		ret = nand->scan(mtd);
+	} else {
+		ret = nand_scan_ident(mtd, maxchips, NULL);
+		if (!ret)
+			ret = nand_scan_tail(mtd);
+	}
+
 	return ret;
 }
 
