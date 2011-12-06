@@ -30,9 +30,9 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)lib$(BOARD).o
 
 # Objects for Xilinx JTAG programming (CPLD)
-# CPLD  = ../common/xilinx_jtag/lenval.o \
-#	  ../common/xilinx_jtag/micro.o \
-#	  ../common/xilinx_jtag/ports.o
+# CPLD    = ../../drivers/misc/xilinx_jtag_lenval.o \
+#	  ../../drivers/misc/xilinx_jtag_micro.o \
+#	  ../common/xilinx_jtag_ports.o
 
 # COBJS	= $(BOARD).o flash.o $(CPLD)
 COBJS	= $(BOARD).o flash.o

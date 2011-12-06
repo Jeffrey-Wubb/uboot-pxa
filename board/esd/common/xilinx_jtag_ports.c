@@ -34,7 +34,7 @@
 #include <asm/processor.h>
 #include <asm/io.h>
 
-#include "ports.h"
+#include <../drivers/misc/xilinx_jtag_ports.h>
 
 static unsigned long output = 0;
 static int filepos = 0;

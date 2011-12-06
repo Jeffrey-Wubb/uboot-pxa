@@ -30,8 +30,8 @@
 #include <common.h>
 #include <asm/processor.h>
 
-#include "lenval.h"
-#include "ports.h"
+#include "xilinx_jtag_lenval.h"
+#include "xilinx_jtag_ports.h"
 
 
 /*****************************************************************************

@@ -62,9 +62,9 @@
 #include <command.h>
 #include <asm/processor.h>
 
-#include "micro.h"
-#include "lenval.h"
-#include "ports.h"
+#include "xilinx_jtag_micro.h"
+#include "xilinx_jtag_lenval.h"
+#include "xilinx_jtag_ports.h"
 
 const unsigned char *xsvfdata;
 
