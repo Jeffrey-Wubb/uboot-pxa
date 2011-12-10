@@ -164,6 +164,8 @@ main (int argc, char **argv)
 	init_ubl_image_type();
 	/* Init Davinci AIS support */
 	init_ais_image_type();
+	/* Init PXA image support */
+	init_pxa_image_type();
 
 	params.cmdname = *argv;
 	params.addr = params.ep = 0;
