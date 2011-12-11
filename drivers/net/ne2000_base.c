@@ -89,8 +89,6 @@ Add SNMP
 #include "ne2000.h"
 #endif
 
-static dp83902a_priv_data_t nic; /* just one instance of the card supported */
-
 uint32_t ne2k_default_in(uint8_t *addr, uint32_t offset)
 {
 	uint32_t ret;
@@ -110,6 +108,7 @@ struct ne2k_io_accessors {
 
 struct ne2k_private_data {
 	struct ne2k_io_accessors	io;
+	struct dp83902a_priv_data	nic;
 };
 
 /* forward definition of function used for the uboot interface */
@@ -123,7 +122,8 @@ void uboot_push_tx_done(int key, int val);
 static bool
 dp83902a_init(struct eth_device *dev)
 {
-	dp83902a_priv_data_t *dp = &nic;
+	struct ne2k_private_data *pdata = dev->priv;
+	struct dp83902a_priv_data *dp = &pdata->nic;
 	u8* base;
 #if defined(NE2000_BASIC_INIT)
 	int i;
@@ -139,7 +139,6 @@ dp83902a_init(struct eth_device *dev)
 
 #if defined(NE2000_BASIC_INIT)
 	unsigned char *enetaddr = dev->enetaddr;
-	struct ne2k_private_data *pdata = dev->priv;
 	const struct ne2k_io_accessors *io = &pdata->io;
 
 	/* AX88796L doesn't need */
@@ -167,8 +166,8 @@ dp83902a_init(struct eth_device *dev)
 static void
 dp83902a_stop(struct eth_device *dev)
 {
-	dp83902a_priv_data_t *dp = &nic;
 	struct ne2k_private_data *pdata = dev->priv;
+	struct dp83902a_priv_data *dp = &pdata->nic;
 	const struct ne2k_io_accessors *io = &pdata->io;
 	u8 *base = dp->base;
 
@@ -190,9 +189,9 @@ dp83902a_stop(struct eth_device *dev)
 static void
 dp83902a_start(struct eth_device *dev)
 {
-	dp83902a_priv_data_t *dp = &nic;
-	unsigned char *enaddr = dev->enetaddr;
 	struct ne2k_private_data *pdata = dev->priv;
+	struct dp83902a_priv_data *dp = &pdata->nic;
+	unsigned char *enaddr = dev->enetaddr;
 	const struct ne2k_io_accessors *io = &pdata->io;
 	u8 *base = dp->base;
 	int i;
@@ -244,7 +243,7 @@ dp83902a_start(struct eth_device *dev)
 static void
 dp83902a_start_xmit(struct ne2k_private_data *pdata, int start_page, int len)
 {
-	dp83902a_priv_data_t *dp = (dp83902a_priv_data_t *) &nic;
+	struct dp83902a_priv_data *dp = &pdata->nic;
 	const struct ne2k_io_accessors *io = &pdata->io;
 	u8 *base = dp->base;
 
@@ -273,7 +272,7 @@ dp83902a_start_xmit(struct ne2k_private_data *pdata, int start_page, int len)
 static void
 dp83902a_send(struct ne2k_private_data *pdata, u8 *data, int total_len, u32 key)
 {
-	struct dp83902a_priv_data *dp = (struct dp83902a_priv_data *) &nic;
+	struct dp83902a_priv_data *dp = &pdata->nic;
 	const struct ne2k_io_accessors *io = &pdata->io;
 	u8 *base = dp->base;
 	int len, start_page, pkt_len, i, isr;
@@ -403,7 +402,7 @@ dp83902a_send(struct ne2k_private_data *pdata, u8 *data, int total_len, u32 key)
 static void
 dp83902a_RxEvent(struct ne2k_private_data *pdata)
 {
-	struct dp83902a_priv_data *dp = (struct dp83902a_priv_data *) &nic;
+	struct dp83902a_priv_data *dp = &pdata->nic;
 	const struct ne2k_io_accessors *io = &pdata->io;
 	u8 *base = dp->base;
 	u8 rcv_hdr[4];
@@ -475,7 +474,7 @@ dp83902a_RxEvent(struct ne2k_private_data *pdata)
 static void
 dp83902a_recv(struct ne2k_private_data *pdata, u8 *data, int len)
 {
-	struct dp83902a_priv_data *dp = (struct dp83902a_priv_data *) &nic;
+	struct dp83902a_priv_data *dp = &pdata->nic;
 	const struct ne2k_io_accessors *io = &pdata->io;
 	u8 *base = dp->base;
 	int i, mlen;
@@ -541,7 +540,7 @@ dp83902a_recv(struct ne2k_private_data *pdata, u8 *data, int len)
 static void
 dp83902a_TxEvent(struct ne2k_private_data *pdata)
 {
-	struct dp83902a_priv_data *dp = (struct dp83902a_priv_data *) &nic;
+	struct dp83902a_priv_data *dp = &pdata->nic;
 	const struct ne2k_io_accessors *io = &pdata->io;
 	u8 *base = dp->base;
 	u32 key;
@@ -578,7 +577,7 @@ dp83902a_TxEvent(struct ne2k_private_data *pdata)
 static void
 dp83902a_ClearCounters(struct ne2k_private_data *pdata)
 {
-	struct dp83902a_priv_data *dp = (struct dp83902a_priv_data *) &nic;
+	struct dp83902a_priv_data *dp = &pdata->nic;
 	const struct ne2k_io_accessors *io = &pdata->io;
 	u8 *base = dp->base;
 
@@ -595,7 +594,7 @@ dp83902a_ClearCounters(struct ne2k_private_data *pdata)
 static void
 dp83902a_Overflow(struct ne2k_private_data *pdata)
 {
-	struct dp83902a_priv_data *dp = (struct dp83902a_priv_data *)&nic;
+	struct dp83902a_priv_data *dp = &pdata->nic;
 	const struct ne2k_io_accessors *io = &pdata->io;
 	u8 *base = dp->base;
 	u8 isr;
@@ -637,7 +636,7 @@ dp83902a_Overflow(struct ne2k_private_data *pdata)
 static void
 dp83902a_poll(struct ne2k_private_data *pdata)
 {
-	struct dp83902a_priv_data *dp = (struct dp83902a_priv_data *) &nic;
+	struct dp83902a_priv_data *dp = &pdata->nic;
 	const struct ne2k_io_accessors *io = &pdata->io;
 	u8 *base = dp->base;
 	u8 isr;
@@ -716,6 +715,9 @@ void uboot_push_tx_done(int key, int val) {
  */
 static int ne2k_setup_driver(struct eth_device *dev)
 {
+	struct ne2k_private_data *pdata = dev->priv;
+	struct dp83902a_priv_data *dp = &pdata->nic;
+
 	PRINTK("### ne2k_setup_driver\n");
 
 	if (!pbuf) {
@@ -736,13 +738,13 @@ static int ne2k_setup_driver(struct eth_device *dev)
 	}
 #endif
 
-	nic.base = (u8 *) CONFIG_DRIVER_NE2000_BASE;
+	dp->base = (u8 *) CONFIG_DRIVER_NE2000_BASE;
 
-	nic.data = nic.base + DP_DATA;
-	nic.tx_buf1 = START_PG;
-	nic.tx_buf2 = START_PG2;
-	nic.rx_buf_start = RX_START;
-	nic.rx_buf_end = RX_END;
+	dp->data = dp->base + DP_DATA;
+	dp->tx_buf1 = START_PG;
+	dp->tx_buf2 = START_PG2;
+	dp->rx_buf_start = RX_START;
+	dp->rx_buf_end = RX_END;
 
 	/*
 	 * According to doc/README.enetaddr, drivers shall give priority
@@ -751,7 +753,7 @@ static int ne2k_setup_driver(struct eth_device *dev)
 	 */
 	if (!eth_getenv_enetaddr("ethaddr", dev->enetaddr)) {
 		/* If the MAC address is not in the environment, get it: */
-		if (!get_prom(dev->enetaddr, nic.base)) /* get MAC from prom */
+		if (!get_prom(dev->enetaddr, dp->base)) /* get MAC from prom */
 			dp83902a_init(dev);   /* fallback: seeprom */
 		/* And write it into the environment otherwise eth_write_hwaddr
 		 * returns -1 due to eth_getenv_enetaddr_by_index() failing,
@@ -830,9 +832,6 @@ int ne2k_register_io(uint32_t (*in)(uint8_t *addr, uint32_t offset),
 		return -ENOMEM;
 	}
 
-	if (ne2k_setup_driver(dev))
-		return -EINVAL;
-
 	if (in == NULL)
 		in = ne2k_default_in;
 
@@ -847,6 +846,9 @@ int ne2k_register_io(uint32_t (*in)(uint8_t *addr, uint32_t offset),
 	dev->send = ne2k_send;
 	dev->recv = ne2k_recv;
 	dev->priv = pdata;
+
+	if (ne2k_setup_driver(dev))
+		return -EINVAL;
 
 	sprintf(dev->name, "NE2000");
 
