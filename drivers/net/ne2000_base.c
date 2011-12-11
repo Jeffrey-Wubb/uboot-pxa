@@ -76,10 +76,7 @@ Add SNMP
 #include <command.h>
 #include <net.h>
 #include <malloc.h>
-
-/* forward definition of function used for the uboot interface */
-void uboot_push_packet_len(int len);
-void uboot_push_tx_done(int key, int val);
+#include <errno.h>
 
 /* NE2000 base header file */
 #include "ne2000_base.h"
@@ -94,12 +91,37 @@ void uboot_push_tx_done(int key, int val);
 
 static dp83902a_priv_data_t nic; /* just one instance of the card supported */
 
+uint32_t ne2k_default_in(uint8_t *addr, uint32_t offset)
+{
+	uint32_t ret;
+	DP_IN(addr, offset, ret);
+	return ret;
+}
+
+void ne2k_default_out(uint8_t *addr, uint32_t offset, uint32_t val)
+{
+	DP_OUT(addr, offset, val);
+}
+
+struct ne2k_io_accessors {
+	uint32_t	(*in)(uint8_t *addr, uint32_t offset);
+	void		(*out)(uint8_t *addr, uint32_t offset, uint32_t val);
+};
+
+struct ne2k_private_data {
+	struct ne2k_io_accessors	io;
+};
+
+/* forward definition of function used for the uboot interface */
+void uboot_push_packet_len(struct ne2k_private_data *pdata, int len);
+void uboot_push_tx_done(int key, int val);
+
 /**
  * This function reads the MAC address from the serial EEPROM,
  * used if PROM read fails. Does nothing for ax88796 chips (sh boards)
  */
 static bool
-dp83902a_init(unsigned char *enetaddr)
+dp83902a_init(struct eth_device *dev)
 {
 	dp83902a_priv_data_t *dp = &nic;
 	u8* base;
@@ -116,13 +138,17 @@ dp83902a_init(unsigned char *enetaddr)
 	DEBUG_LINE();
 
 #if defined(NE2000_BASIC_INIT)
+	unsigned char *enetaddr = dev->enetaddr;
+	struct ne2k_private_data *pdata = dev->priv;
+	const struct ne2k_io_accessors *io = &pdata->io;
+
 	/* AX88796L doesn't need */
 	/* Prepare ESA */
-	DP_OUT(base, DP_CR, DP_CR_NODMA | DP_CR_PAGE1);	/* Select page 1 */
+	io->out(base, DP_CR, DP_CR_NODMA | DP_CR_PAGE1);	/* Select page 1 */
 	/* Use the address from the serial EEPROM */
 	for (i = 0; i < 6; i++)
-		DP_IN(base, DP_P1_PAR0+i, dp->esa[i]);
-	DP_OUT(base, DP_CR, DP_CR_NODMA | DP_CR_PAGE0);	/* Select page 0 */
+		dp->esa[i] = io->in(base, DP_P1_PAR0+i);
+	io->out(base, DP_CR, DP_CR_NODMA | DP_CR_PAGE0);	/* Select page 0 */
 
 	printf("NE2000 - %s ESA: %02x:%02x:%02x:%02x:%02x:%02x\n",
 		"eeprom",
@@ -139,16 +165,18 @@ dp83902a_init(unsigned char *enetaddr)
 }
 
 static void
-dp83902a_stop(void)
+dp83902a_stop(struct eth_device *dev)
 {
 	dp83902a_priv_data_t *dp = &nic;
+	struct ne2k_private_data *pdata = dev->priv;
+	const struct ne2k_io_accessors *io = &pdata->io;
 	u8 *base = dp->base;
 
 	DEBUG_FUNCTION();
 
-	DP_OUT(base, DP_CR, DP_CR_PAGE0 | DP_CR_NODMA | DP_CR_STOP);	/* Brutal */
-	DP_OUT(base, DP_ISR, 0xFF);		/* Clear any pending interrupts */
-	DP_OUT(base, DP_IMR, 0x00);		/* Disable all interrupts */
+	io->out(base, DP_CR, DP_CR_PAGE0 | DP_CR_NODMA | DP_CR_STOP);	/* Brutal */
+	io->out(base, DP_ISR, 0xFF);		/* Clear any pending interrupts */
+	io->out(base, DP_IMR, 0x00);		/* Disable all interrupts */
 
 	dp->running = false;
 }
@@ -160,9 +188,12 @@ dp83902a_stop(void)
  * the hardware ready to send/receive packets.
  */
 static void
-dp83902a_start(u8 * enaddr)
+dp83902a_start(struct eth_device *dev)
 {
 	dp83902a_priv_data_t *dp = &nic;
+	unsigned char *enaddr = dev->enetaddr;
+	struct ne2k_private_data *pdata = dev->priv;
+	const struct ne2k_io_accessors *io = &pdata->io;
 	u8 *base = dp->base;
 	int i;
 
@@ -170,37 +201,37 @@ dp83902a_start(u8 * enaddr)
 
 	DEBUG_FUNCTION();
 
-	DP_OUT(base, DP_CR, DP_CR_PAGE0 | DP_CR_NODMA | DP_CR_STOP); /* Brutal */
-	DP_OUT(base, DP_DCR, DP_DCR_INIT);
-	DP_OUT(base, DP_RBCH, 0);		/* Remote byte count */
-	DP_OUT(base, DP_RBCL, 0);
-	DP_OUT(base, DP_RCR, DP_RCR_MON);	/* Accept no packets */
-	DP_OUT(base, DP_TCR, DP_TCR_LOCAL);	/* Transmitter [virtually] off */
-	DP_OUT(base, DP_TPSR, dp->tx_buf1);	/* Transmitter start page */
+	io->out(base, DP_CR, DP_CR_PAGE0 | DP_CR_NODMA | DP_CR_STOP); /* Brutal */
+	io->out(base, DP_DCR, DP_DCR_INIT);
+	io->out(base, DP_RBCH, 0);		/* Remote byte count */
+	io->out(base, DP_RBCL, 0);
+	io->out(base, DP_RCR, DP_RCR_MON);	/* Accept no packets */
+	io->out(base, DP_TCR, DP_TCR_LOCAL);	/* Transmitter [virtually] off */
+	io->out(base, DP_TPSR, dp->tx_buf1);	/* Transmitter start page */
 	dp->tx1 = dp->tx2 = 0;
 	dp->tx_next = dp->tx_buf1;
 	dp->tx_started = false;
 	dp->running = true;
-	DP_OUT(base, DP_PSTART, dp->rx_buf_start); /* Receive ring start page */
-	DP_OUT(base, DP_BNDRY, dp->rx_buf_end - 1); /* Receive ring boundary */
-	DP_OUT(base, DP_PSTOP, dp->rx_buf_end);	/* Receive ring end page */
+	io->out(base, DP_PSTART, dp->rx_buf_start); /* Receive ring start page */
+	io->out(base, DP_BNDRY, dp->rx_buf_end - 1); /* Receive ring boundary */
+	io->out(base, DP_PSTOP, dp->rx_buf_end);	/* Receive ring end page */
 	dp->rx_next = dp->rx_buf_start - 1;
 	dp->running = true;
-	DP_OUT(base, DP_ISR, 0xFF);		/* Clear any pending interrupts */
-	DP_OUT(base, DP_IMR, DP_IMR_All);	/* Enable all interrupts */
-	DP_OUT(base, DP_CR, DP_CR_NODMA | DP_CR_PAGE1 | DP_CR_STOP);	/* Select page 1 */
-	DP_OUT(base, DP_P1_CURP, dp->rx_buf_start);	/* Current page - next free page for Rx */
+	io->out(base, DP_ISR, 0xFF);		/* Clear any pending interrupts */
+	io->out(base, DP_IMR, DP_IMR_All);	/* Enable all interrupts */
+	io->out(base, DP_CR, DP_CR_NODMA | DP_CR_PAGE1 | DP_CR_STOP);	/* Select page 1 */
+	io->out(base, DP_P1_CURP, dp->rx_buf_start);	/* Current page - next free page for Rx */
 	dp->running = true;
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
 		/* FIXME */
 		/*((vu_short*)( base + ((DP_P1_PAR0 + i) * 2) +
 		 * 0x1400)) = enaddr[i];*/
-		DP_OUT(base, DP_P1_PAR0+i, enaddr[i]);
+		io->out(base, DP_P1_PAR0+i, enaddr[i]);
 	}
 	/* Enable and start device */
-	DP_OUT(base, DP_CR, DP_CR_PAGE0 | DP_CR_NODMA | DP_CR_START);
-	DP_OUT(base, DP_TCR, DP_TCR_NORMAL); /* Normal transmit operations */
-	DP_OUT(base, DP_RCR, DP_RCR_AB); /* Accept broadcast, no errors, no multicast */
+	io->out(base, DP_CR, DP_CR_PAGE0 | DP_CR_NODMA | DP_CR_START);
+	io->out(base, DP_TCR, DP_TCR_NORMAL); /* Normal transmit operations */
+	io->out(base, DP_RCR, DP_RCR_AB); /* Accept broadcast, no errors, no multicast */
 	dp->running = true;
 }
 
@@ -211,9 +242,10 @@ dp83902a_start(u8 * enaddr)
  */
 
 static void
-dp83902a_start_xmit(int start_page, int len)
+dp83902a_start_xmit(struct ne2k_private_data *pdata, int start_page, int len)
 {
 	dp83902a_priv_data_t *dp = (dp83902a_priv_data_t *) &nic;
+	const struct ne2k_io_accessors *io = &pdata->io;
 	u8 *base = dp->base;
 
 	DEBUG_FUNCTION();
@@ -224,12 +256,12 @@ dp83902a_start_xmit(int start_page, int len)
 		printf("TX already started?!?\n");
 #endif
 
-	DP_OUT(base, DP_ISR, (DP_ISR_TxP | DP_ISR_TxE));
-	DP_OUT(base, DP_CR, DP_CR_PAGE0 | DP_CR_NODMA | DP_CR_START);
-	DP_OUT(base, DP_TBCL, len & 0xFF);
-	DP_OUT(base, DP_TBCH, len >> 8);
-	DP_OUT(base, DP_TPSR, start_page);
-	DP_OUT(base, DP_CR, DP_CR_NODMA | DP_CR_TXPKT | DP_CR_START);
+	io->out(base, DP_ISR, (DP_ISR_TxP | DP_ISR_TxE));
+	io->out(base, DP_CR, DP_CR_PAGE0 | DP_CR_NODMA | DP_CR_START);
+	io->out(base, DP_TBCL, len & 0xFF);
+	io->out(base, DP_TBCH, len >> 8);
+	io->out(base, DP_TPSR, start_page);
+	io->out(base, DP_CR, DP_CR_NODMA | DP_CR_TXPKT | DP_CR_START);
 
 	dp->tx_started = true;
 }
@@ -239,9 +271,10 @@ dp83902a_start_xmit(int start_page, int len)
  * that there is free buffer space (dp->tx_next).
  */
 static void
-dp83902a_send(u8 *data, int total_len, u32 key)
+dp83902a_send(struct ne2k_private_data *pdata, u8 *data, int total_len, u32 key)
 {
 	struct dp83902a_priv_data *dp = (struct dp83902a_priv_data *) &nic;
+	const struct ne2k_io_accessors *io = &pdata->io;
 	u8 *base = dp->base;
 	int len, start_page, pkt_len, i, isr;
 #if DEBUG & 4
@@ -271,7 +304,7 @@ dp83902a_send(u8 *data, int total_len, u32 key)
 	printf("TX prep page %d len %d\n", start_page, pkt_len);
 #endif
 
-	DP_OUT(base, DP_ISR, DP_ISR_RDC);	/* Clear end of DMA */
+	io->out(base, DP_ISR, DP_ISR_RDC);	/* Clear end of DMA */
 	{
 		/*
 		 * Dummy read. The manual sez something slightly different,
@@ -279,15 +312,14 @@ dp83902a_send(u8 *data, int total_len, u32 key)
 		 * does (i.e., also read data).
 		 */
 
-		u16 tmp;
 		int len = 1;
 
-		DP_OUT(base, DP_RSAL, 0x100 - len);
-		DP_OUT(base, DP_RSAH, (start_page - 1) & 0xff);
-		DP_OUT(base, DP_RBCL, len);
-		DP_OUT(base, DP_RBCH, 0);
-		DP_OUT(base, DP_CR, DP_CR_PAGE0 | DP_CR_RDMA | DP_CR_START);
-		DP_IN_DATA(dp->data, tmp);
+		io->out(base, DP_RSAL, 0x100 - len);
+		io->out(base, DP_RSAH, (start_page - 1) & 0xff);
+		io->out(base, DP_RBCL, len);
+		io->out(base, DP_RBCH, 0);
+		io->out(base, DP_CR, DP_CR_PAGE0 | DP_CR_RDMA | DP_CR_START);
+		io->in(dp->data, 0);
 	}
 
 #ifdef CYGHWR_NS_DP83902A_PLF_BROKEN_TX_DMA
@@ -299,11 +331,11 @@ dp83902a_send(u8 *data, int total_len, u32 key)
 #endif
 
 	/* Send data to device buffer(s) */
-	DP_OUT(base, DP_RSAL, 0);
-	DP_OUT(base, DP_RSAH, start_page);
-	DP_OUT(base, DP_RBCL, pkt_len & 0xFF);
-	DP_OUT(base, DP_RBCH, pkt_len >> 8);
-	DP_OUT(base, DP_CR, DP_CR_WDMA | DP_CR_START);
+	io->out(base, DP_RSAL, 0);
+	io->out(base, DP_RSAH, start_page);
+	io->out(base, DP_RBCL, pkt_len & 0xFF);
+	io->out(base, DP_RBCH, pkt_len >> 8);
+	io->out(base, DP_CR, DP_CR_WDMA | DP_CR_START);
 
 	/* Put data into buffer */
 #if DEBUG & 4
@@ -316,7 +348,7 @@ dp83902a_send(u8 *data, int total_len, u32 key)
 		if (0 == (++dx % 16)) printf("\n ");
 #endif
 
-		DP_OUT_DATA(dp->data, *data++);
+		io->out(dp->data, 0, *data++);
 		len--;
 	}
 #if DEBUG & 4
@@ -329,7 +361,7 @@ dp83902a_send(u8 *data, int total_len, u32 key)
 		/* Padding to 802.3 length was required */
 		for (i = total_len; i < pkt_len;) {
 			i++;
-			DP_OUT_DATA(dp->data, 0);
+			io->out(dp->data, 0, 0);
 		}
 	}
 
@@ -344,11 +376,11 @@ dp83902a_send(u8 *data, int total_len, u32 key)
 
 	/* Wait for DMA to complete */
 	do {
-		DP_IN(base, DP_ISR, isr);
+		isr = io->in(base, DP_ISR);
 	} while ((isr & DP_ISR_RDC) == 0);
 
 	/* Then disable DMA */
-	DP_OUT(base, DP_CR, DP_CR_PAGE0 | DP_CR_NODMA | DP_CR_START);
+	io->out(base, DP_CR, DP_CR_PAGE0 | DP_CR_NODMA | DP_CR_START);
 
 	/* Start transmit if not already going */
 	if (!dp->tx_started) {
@@ -357,7 +389,7 @@ dp83902a_send(u8 *data, int total_len, u32 key)
 		} else {
 			dp->tx_int = 2; /* Expecting interrupt from BUF2 */
 		}
-		dp83902a_start_xmit(start_page, pkt_len);
+		dp83902a_start_xmit(pdata, start_page, pkt_len);
 	}
 }
 
@@ -369,23 +401,23 @@ dp83902a_send(u8 *data, int total_len, u32 key)
  * 'dp83902a_recv' will be called to actually fetch it from the hardware.
  */
 static void
-dp83902a_RxEvent(void)
+dp83902a_RxEvent(struct ne2k_private_data *pdata)
 {
 	struct dp83902a_priv_data *dp = (struct dp83902a_priv_data *) &nic;
+	const struct ne2k_io_accessors *io = &pdata->io;
 	u8 *base = dp->base;
-	u8 rsr;
 	u8 rcv_hdr[4];
 	int i, len, pkt, cur;
 
 	DEBUG_FUNCTION();
 
-	DP_IN(base, DP_RSR, rsr);
+	io->in(base, DP_RSR);
 	while (true) {
 		/* Read incoming packet header */
-		DP_OUT(base, DP_CR, DP_CR_PAGE1 | DP_CR_NODMA | DP_CR_START);
-		DP_IN(base, DP_P1_CURP, cur);
-		DP_OUT(base, DP_P1_CR, DP_CR_PAGE0 | DP_CR_NODMA | DP_CR_START);
-		DP_IN(base, DP_BNDRY, pkt);
+		io->out(base, DP_CR, DP_CR_PAGE1 | DP_CR_NODMA | DP_CR_START);
+		cur = io->in(base, DP_P1_CURP);
+		io->out(base, DP_P1_CR, DP_CR_PAGE0 | DP_CR_NODMA | DP_CR_START);
+		pkt = io->in(base, DP_BNDRY);
 
 		pkt += 1;
 		if (pkt == dp->rx_buf_end)
@@ -394,27 +426,27 @@ dp83902a_RxEvent(void)
 		if (pkt == cur) {
 			break;
 		}
-		DP_OUT(base, DP_RBCL, sizeof(rcv_hdr));
-		DP_OUT(base, DP_RBCH, 0);
-		DP_OUT(base, DP_RSAL, 0);
-		DP_OUT(base, DP_RSAH, pkt);
+		io->out(base, DP_RBCL, sizeof(rcv_hdr));
+		io->out(base, DP_RBCH, 0);
+		io->out(base, DP_RSAL, 0);
+		io->out(base, DP_RSAH, pkt);
 		if (dp->rx_next == pkt) {
 			if (cur == dp->rx_buf_start)
-				DP_OUT(base, DP_BNDRY, dp->rx_buf_end - 1);
+				io->out(base, DP_BNDRY, dp->rx_buf_end - 1);
 			else
-				DP_OUT(base, DP_BNDRY, cur - 1); /* Update pointer */
+				io->out(base, DP_BNDRY, cur - 1); /* Update pointer */
 			return;
 		}
 		dp->rx_next = pkt;
-		DP_OUT(base, DP_ISR, DP_ISR_RDC); /* Clear end of DMA */
-		DP_OUT(base, DP_CR, DP_CR_RDMA | DP_CR_START);
+		io->out(base, DP_ISR, DP_ISR_RDC); /* Clear end of DMA */
+		io->out(base, DP_CR, DP_CR_RDMA | DP_CR_START);
 #ifdef CYGHWR_NS_DP83902A_PLF_BROKEN_RX_DMA
 		CYGACC_CALL_IF_DELAY_US(10);
 #endif
 
 		/* read header (get data size)*/
 		for (i = 0; i < sizeof(rcv_hdr);) {
-			DP_IN_DATA(dp->data, rcv_hdr[i++]);
+			rcv_hdr[i++] = io->in(dp->data, 0);
 		}
 
 #if DEBUG & 5
@@ -424,12 +456,12 @@ dp83902a_RxEvent(void)
 		len = ((rcv_hdr[3] << 8) | rcv_hdr[2]) - sizeof(rcv_hdr);
 
 		/* data read */
-		uboot_push_packet_len(len);
+		uboot_push_packet_len(pdata, len);
 
 		if (rcv_hdr[1] == dp->rx_buf_start)
-			DP_OUT(base, DP_BNDRY, dp->rx_buf_end - 1);
+			io->out(base, DP_BNDRY, dp->rx_buf_end - 1);
 		else
-			DP_OUT(base, DP_BNDRY, rcv_hdr[1] - 1); /* Update pointer */
+			io->out(base, DP_BNDRY, rcv_hdr[1] - 1); /* Update pointer */
 	}
 }
 
@@ -441,9 +473,10 @@ dp83902a_RxEvent(void)
  * efficient processing in the upper layers of the stack.
  */
 static void
-dp83902a_recv(u8 *data, int len)
+dp83902a_recv(struct ne2k_private_data *pdata, u8 *data, int len)
 {
 	struct dp83902a_priv_data *dp = (struct dp83902a_priv_data *) &nic;
+	const struct ne2k_io_accessors *io = &pdata->io;
 	u8 *base = dp->base;
 	int i, mlen;
 	u8 saved_char = 0;
@@ -459,13 +492,13 @@ dp83902a_recv(u8 *data, int len)
 #endif
 
 	/* Read incoming packet data */
-	DP_OUT(base, DP_CR, DP_CR_PAGE0 | DP_CR_NODMA | DP_CR_START);
-	DP_OUT(base, DP_RBCL, len & 0xFF);
-	DP_OUT(base, DP_RBCH, len >> 8);
-	DP_OUT(base, DP_RSAL, 4);		/* Past header */
-	DP_OUT(base, DP_RSAH, dp->rx_next);
-	DP_OUT(base, DP_ISR, DP_ISR_RDC); /* Clear end of DMA */
-	DP_OUT(base, DP_CR, DP_CR_RDMA | DP_CR_START);
+	io->out(base, DP_CR, DP_CR_PAGE0 | DP_CR_NODMA | DP_CR_START);
+	io->out(base, DP_RBCL, len & 0xFF);
+	io->out(base, DP_RBCH, len >> 8);
+	io->out(base, DP_RSAL, 4);		/* Past header */
+	io->out(base, DP_RSAH, dp->rx_next);
+	io->out(base, DP_ISR, DP_ISR_RDC); /* Clear end of DMA */
+	io->out(base, DP_CR, DP_CR_RDMA | DP_CR_START);
 #ifdef CYGHWR_NS_DP83902A_PLF_BROKEN_RX_DMA
 	CYGACC_CALL_IF_DELAY_US(10);
 #endif
@@ -489,7 +522,7 @@ dp83902a_recv(u8 *data, int len)
 
 				{
 					u8 tmp;
-					DP_IN_DATA(dp->data, tmp);
+					tmp = io->in(dp->data, 0);
 #if DEBUG & 4
 					printf(" %02x", tmp);
 					if (0 == (++dx % 16)) printf("\n ");
@@ -506,16 +539,16 @@ dp83902a_recv(u8 *data, int len)
 }
 
 static void
-dp83902a_TxEvent(void)
+dp83902a_TxEvent(struct ne2k_private_data *pdata)
 {
 	struct dp83902a_priv_data *dp = (struct dp83902a_priv_data *) &nic;
+	const struct ne2k_io_accessors *io = &pdata->io;
 	u8 *base = dp->base;
-	u8 tsr;
 	u32 key;
 
 	DEBUG_FUNCTION();
 
-	DP_IN(base, DP_TSR, tsr);
+	io->in(base, DP_TSR);
 	if (dp->tx_int == 1) {
 		key = dp->tx1_key;
 		dp->tx1 = 0;
@@ -526,10 +559,10 @@ dp83902a_TxEvent(void)
 	/* Start next packet if one is ready */
 	dp->tx_started = false;
 	if (dp->tx1) {
-		dp83902a_start_xmit(dp->tx1, dp->tx1_len);
+		dp83902a_start_xmit(pdata, dp->tx1, dp->tx1_len);
 		dp->tx_int = 1;
 	} else if (dp->tx2) {
-		dp83902a_start_xmit(dp->tx2, dp->tx2_len);
+		dp83902a_start_xmit(pdata, dp->tx2, dp->tx2_len);
 		dp->tx_int = 2;
 	} else {
 		dp->tx_int = 0;
@@ -543,16 +576,16 @@ dp83902a_TxEvent(void)
  * interrupt.
  */
 static void
-dp83902a_ClearCounters(void)
+dp83902a_ClearCounters(struct ne2k_private_data *pdata)
 {
 	struct dp83902a_priv_data *dp = (struct dp83902a_priv_data *) &nic;
+	const struct ne2k_io_accessors *io = &pdata->io;
 	u8 *base = dp->base;
-	u8 cnt1, cnt2, cnt3;
 
-	DP_IN(base, DP_FER, cnt1);
-	DP_IN(base, DP_CER, cnt2);
-	DP_IN(base, DP_MISSED, cnt3);
-	DP_OUT(base, DP_ISR, DP_ISR_CNT);
+	io->in(base, DP_FER);
+	io->in(base, DP_CER);
+	io->in(base, DP_MISSED);
+	io->out(base, DP_ISR, DP_ISR_CNT);
 }
 
 /*
@@ -560,55 +593,57 @@ dp83902a_ClearCounters(void)
  * out in section 7.0 of the datasheet.
  */
 static void
-dp83902a_Overflow(void)
+dp83902a_Overflow(struct ne2k_private_data *pdata)
 {
 	struct dp83902a_priv_data *dp = (struct dp83902a_priv_data *)&nic;
+	const struct ne2k_io_accessors *io = &pdata->io;
 	u8 *base = dp->base;
 	u8 isr;
 
 	/* Issue a stop command and wait 1.6ms for it to complete. */
-	DP_OUT(base, DP_CR, DP_CR_STOP | DP_CR_NODMA);
+	io->out(base, DP_CR, DP_CR_STOP | DP_CR_NODMA);
 	CYGACC_CALL_IF_DELAY_US(1600);
 
 	/* Clear the remote byte counter registers. */
-	DP_OUT(base, DP_RBCL, 0);
-	DP_OUT(base, DP_RBCH, 0);
+	io->out(base, DP_RBCL, 0);
+	io->out(base, DP_RBCH, 0);
 
 	/* Enter loopback mode while we clear the buffer. */
-	DP_OUT(base, DP_TCR, DP_TCR_LOCAL);
-	DP_OUT(base, DP_CR, DP_CR_START | DP_CR_NODMA);
+	io->out(base, DP_TCR, DP_TCR_LOCAL);
+	io->out(base, DP_CR, DP_CR_START | DP_CR_NODMA);
 
 	/*
 	 * Read in as many packets as we can and acknowledge any and receive
 	 * interrupts. Since the buffer has overflowed, a receive event of
 	 * some kind will have occured.
 	 */
-	dp83902a_RxEvent();
-	DP_OUT(base, DP_ISR, DP_ISR_RxP|DP_ISR_RxE);
+	dp83902a_RxEvent(pdata);
+	io->out(base, DP_ISR, DP_ISR_RxP|DP_ISR_RxE);
 
 	/* Clear the overflow condition and leave loopback mode. */
-	DP_OUT(base, DP_ISR, DP_ISR_OFLW);
-	DP_OUT(base, DP_TCR, DP_TCR_NORMAL);
+	io->out(base, DP_ISR, DP_ISR_OFLW);
+	io->out(base, DP_TCR, DP_TCR_NORMAL);
 
 	/*
 	 * If a transmit command was issued, but no transmit event has occured,
 	 * restart it here.
 	 */
-	DP_IN(base, DP_ISR, isr);
+	isr = io->in(base, DP_ISR);
 	if (dp->tx_started && !(isr & (DP_ISR_TxP|DP_ISR_TxE))) {
-		DP_OUT(base, DP_CR, DP_CR_NODMA | DP_CR_TXPKT | DP_CR_START);
+		io->out(base, DP_CR, DP_CR_NODMA | DP_CR_TXPKT | DP_CR_START);
 	}
 }
 
 static void
-dp83902a_poll(void)
+dp83902a_poll(struct ne2k_private_data *pdata)
 {
 	struct dp83902a_priv_data *dp = (struct dp83902a_priv_data *) &nic;
+	const struct ne2k_io_accessors *io = &pdata->io;
 	u8 *base = dp->base;
 	u8 isr;
 
-	DP_OUT(base, DP_CR, DP_CR_NODMA | DP_CR_PAGE0 | DP_CR_START);
-	DP_IN(base, DP_ISR, isr);
+	io->out(base, DP_CR, DP_CR_NODMA | DP_CR_PAGE0 | DP_CR_START);
+	isr = io->in(base, DP_ISR);
 	while (0 != isr) {
 		/*
 		 * The CNT interrupt triggers when the MSB of one of the error
@@ -616,7 +651,7 @@ dp83902a_poll(void)
 		 * we should read their values to reset them.
 		 */
 		if (isr & DP_ISR_CNT) {
-			dp83902a_ClearCounters();
+			dp83902a_ClearCounters(pdata);
 		}
 		/*
 		 * Check for overflow. It's a special case, since there's a
@@ -624,27 +659,27 @@ dp83902a_poll(void)
 		 * a running state.a
 		 */
 		if (isr & DP_ISR_OFLW) {
-			dp83902a_Overflow();
+			dp83902a_Overflow(pdata);
 		} else {
 			/*
 			 * Other kinds of interrupts can be acknowledged simply by
 			 * clearing the relevant bits of the ISR. Do that now, then
 			 * handle the interrupts we care about.
 			 */
-			DP_OUT(base, DP_ISR, isr);	/* Clear set bits */
+			io->out(base, DP_ISR, isr);	/* Clear set bits */
 			if (!dp->running) break;	/* Is this necessary? */
 			/*
 			 * Check for tx_started on TX event since these may happen
 			 * spuriously it seems.
 			 */
 			if (isr & (DP_ISR_TxP|DP_ISR_TxE) && dp->tx_started) {
-				dp83902a_TxEvent();
+				dp83902a_TxEvent(pdata);
 			}
 			if (isr & (DP_ISR_RxP|DP_ISR_RxE)) {
-				dp83902a_RxEvent();
+				dp83902a_RxEvent(pdata);
 			}
 		}
-		DP_IN(base, DP_ISR, isr);
+		isr = io->in(base, DP_ISR);
 	}
 }
 
@@ -655,13 +690,13 @@ static u8 *pbuf = NULL;
 static int pkey = -1;
 static int initialized = 0;
 
-void uboot_push_packet_len(int len) {
+void uboot_push_packet_len(struct ne2k_private_data *pdata, int len) {
 	PRINTK("pushed len = %d\n", len);
 	if (len >= 2000) {
 		printf("NE2000: packet too big\n");
 		return;
 	}
-	dp83902a_recv(&pbuf[0], len);
+	dp83902a_recv(pdata, &pbuf[0], len);
 
 	/*Just pass it to the upper layer*/
 	NetReceive(&pbuf[0], len);
@@ -717,7 +752,7 @@ static int ne2k_setup_driver(struct eth_device *dev)
 	if (!eth_getenv_enetaddr("ethaddr", dev->enetaddr)) {
 		/* If the MAC address is not in the environment, get it: */
 		if (!get_prom(dev->enetaddr, nic.base)) /* get MAC from prom */
-			dp83902a_init(dev->enetaddr);   /* fallback: seeprom */
+			dp83902a_init(dev);   /* fallback: seeprom */
 		/* And write it into the environment otherwise eth_write_hwaddr
 		 * returns -1 due to eth_getenv_enetaddr_by_index() failing,
 		 * and this causes "Warning: failed to set MAC address", and
@@ -729,7 +764,7 @@ static int ne2k_setup_driver(struct eth_device *dev)
 
 static int ne2k_init(struct eth_device *dev, bd_t *bd)
 {
-	dp83902a_start(dev->enetaddr);
+	dp83902a_start(dev);
 	initialized = 1;
 	return 0;
 }
@@ -738,28 +773,30 @@ static void ne2k_halt(struct eth_device *dev)
 {
 	debug("### ne2k_halt\n");
 	if(initialized)
-		dp83902a_stop();
+		dp83902a_stop(dev);
 	initialized = 0;
 }
 
 static int ne2k_recv(struct eth_device *dev)
 {
-	dp83902a_poll();
+	struct ne2k_private_data *pdata = dev->priv;
+	dp83902a_poll(pdata);
 	return 1;
 }
 
 static int ne2k_send(struct eth_device *dev, volatile void *packet, int length)
 {
 	int tmo;
+	struct ne2k_private_data *pdata = dev->priv;
 
 	debug("### ne2k_send\n");
 
 	pkey = -1;
 
-	dp83902a_send((u8 *) packet, length, 666);
+	dp83902a_send(pdata, (u8 *) packet, length, 666);
 	tmo = get_timer (0) + TOUT * CONFIG_SYS_HZ;
 	while(1) {
-		dp83902a_poll();
+		dp83902a_poll(pdata);
 		if (pkey != -1) {
 			PRINTK("Packet sucesfully sent\n");
 			return 0;
@@ -775,25 +812,48 @@ static int ne2k_send(struct eth_device *dev, volatile void *packet, int length)
 
 /**
  * Setup the driver for use and register it with the eth layer
- * @return 0 on success, -1 on error (causing caller to print error msg)
+ * @return 0 on success, < 0 on error (causing caller to print error msg)
  */
-int ne2k_register(void)
+int ne2k_register_io(uint32_t (*in)(uint8_t *addr, uint32_t offset),
+	void (*out)(uint8_t *addr, uint32_t offset, uint32_t value))
 {
 	struct eth_device *dev;
+	struct ne2k_private_data *pdata;
 
 	dev = calloc(sizeof(*dev), 1);
 	if (dev == NULL)
-		return -1;
+		return -ENOMEM;
+
+	pdata = calloc(sizeof(struct ne2k_private_data), 1);
+	if (pdata == NULL) {
+		free(dev);
+		return -ENOMEM;
+	}
 
 	if (ne2k_setup_driver(dev))
-		return -1;
+		return -EINVAL;
+
+	if (in == NULL)
+		in = ne2k_default_in;
+
+	if (out == NULL)
+		out = ne2k_default_out;
+
+	pdata->io.in = in;
+	pdata->io.out = out;
 
 	dev->init = ne2k_init;
 	dev->halt = ne2k_halt;
 	dev->send = ne2k_send;
 	dev->recv = ne2k_recv;
+	dev->priv = pdata;
 
 	sprintf(dev->name, "NE2000");
 
 	return eth_register(dev);
+}
+
+int ne2k_register(void)
+{
+	return ne2k_register_io(NULL, NULL);
 }
